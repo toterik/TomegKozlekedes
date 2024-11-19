@@ -1,3 +1,18 @@
 <resources>
-    <string name="app_name">TomegKozlekedesJelento</string>
+    <string name="app_name">Tömeg Közlekedés Jelentő</string>
+    <string name="item_1">Kezdőoldal</string>
+    <string name="item_2">Foglalás</string>
+    <string name="title_activity_main2">MainActivity2</string>
+    <string name="title_activity_hajofoglalas">Hajofoglalas</string>
+    <string name="title_activity_register">RegisterActivity</string>
+    <string name="logout">Kijelentkezés</string>
+    <string name="login">Bejelentkezés</string>
+    <string name="rendezés">Sort</string>
+    <string name="register">Regisztráció</string>
+    <string name="cancel">Mégse</string>
+    <string name="password">Jelszó</string>
+    <string name="email">Email</string>
+    <string name="booking">Lefoglal</string>
+    <string name="delete">Törlés</string>
+    <string name="passwdagain">Jelszó megerősítése</string>
 </resources>
