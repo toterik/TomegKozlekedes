@@ -1,28 +1,20 @@
 package szakdolgozat.tomegkozlekedesjelento;
 
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 
-public class RegisterActivity extends AppCompatActivity
+public class RegistrationActivity extends AppCompatActivity
 {
     private FirebaseAuth mAuth;
 
@@ -33,7 +25,7 @@ public class RegisterActivity extends AppCompatActivity
         setContentView(R.layout.activity_register);
     }
 
-    public void regisztracio(View view)
+    public void registrationByEmailAndPassword(View view)
     {
         EditText emailET = findViewById(R.id.email);
         EditText passwordET = findViewById(R.id.password);
@@ -56,15 +48,12 @@ public class RegisterActivity extends AppCompatActivity
             return;
         }
 
-
         mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(this, task ->
         {
             if (task.isSuccessful())
             {
-
                 mAuth.signInWithEmailAndPassword(email,password);
-
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                Intent intent = new Intent(this, MainActivity.class);
                 startActivity(intent);
                 finish();
             } else

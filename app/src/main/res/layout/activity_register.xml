@@ -8,7 +8,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".RegisterActivity"
+        tools:context=".RegistrationActivity"
         android:scrollbars="vertical">
 
         <androidx.appcompat.widget.Toolbar
@@ -72,7 +72,7 @@
                 android:id="@+id/registerButton"
                 android:layout_width="match_parent"
                 android:layout_height="80dp"
-                android:onClick="regisztracio"
+                android:onClick="registrationByEmailAndPassword"
                 android:backgroundTint="@color/lightblue"
                 android:textColor="@color/black"
                 android:text="Regisztráció" />
