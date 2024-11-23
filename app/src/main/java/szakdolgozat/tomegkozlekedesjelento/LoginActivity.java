@@ -1,32 +1,35 @@
 package szakdolgozat.tomegkozlekedesjelento;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.Firebase;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 
-public class LoginActivity extends AppCompatActivity {
-
-    protected void onCreate(Bundle savedInstanceState) {
+public class LoginActivity extends AppCompatActivity
+{
+    FirebaseUser user;
+    FirebaseAuth mAuth;
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        mAuth = FirebaseAuth.getInstance();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(false);
-            actionBar.setTitle("");
-        }
-
+        Button resendButton = findViewById(R.id.resendVerificationEmail);
+        resendButton.setVisibility(View.INVISIBLE);
     }
 
     public void cancel(View view)
@@ -40,7 +43,7 @@ public class LoginActivity extends AppCompatActivity {
         EditText passwordEditText = findViewById(R.id.password);
         String email = emailEditText.getText().toString();
         String password = passwordEditText.getText().toString();
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
 
         if (email.isEmpty() || password.isEmpty())
         {
@@ -52,7 +55,7 @@ public class LoginActivity extends AppCompatActivity {
         {
             if (task.isSuccessful())
             {
-                FirebaseUser user = mAuth.getCurrentUser();
+                user = mAuth.getCurrentUser();
                 if (user.isEmailVerified())
                 {
                     Toast.makeText(LoginActivity.this, "Authentication successful.", Toast.LENGTH_SHORT).show();
@@ -62,12 +65,15 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 else
                 {
-                    Toast.makeText(LoginActivity.this, "This account is blocked!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "This account is not verified!", Toast.LENGTH_SHORT).show();
+                    Button resendButton = findViewById(R.id.resendVerificationEmail);
+                    resendButton.setVisibility(View.VISIBLE);
 
                     FirebaseAuth.getInstance().signOut();
                 }
-
-            } else {
+            }
+            else
+            {
                 Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
             }
         });
@@ -76,5 +82,24 @@ public class LoginActivity extends AppCompatActivity {
     {
         Intent intent = new Intent(this, RegistrationActivity.class);
         startActivity(intent);
+    }
+    public void resendVerificationEmail(View view)
+    {
+
+        user.sendEmailVerification().addOnSuccessListener(new OnSuccessListener<Void>()
+        {
+            @Override
+            public void onSuccess(Void unused)
+            {
+                Toast.makeText(LoginActivity.this, "A megerősítő emailt elküldtük!", Toast.LENGTH_SHORT).show();
+            }
+        }).addOnFailureListener(new OnFailureListener()
+        {
+            @Override
+            public void onFailure(@NonNull Exception e)
+            {
+                Log.d("LoginActivity", "Hiba: Email nem lett elküldve! "+e.getMessage());
+            }
+        });
     }
 }

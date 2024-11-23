@@ -1,14 +1,21 @@
 package szakdolgozat.tomegkozlekedesjelento;
 
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
@@ -52,10 +59,21 @@ public class RegistrationActivity extends AppCompatActivity
         {
             if (task.isSuccessful())
             {
-                mAuth.signInWithEmailAndPassword(email,password);
-                Intent intent = new Intent(this, MainActivity.class);
-                startActivity(intent);
-                finish();
+                mAuth.getCurrentUser().sendEmailVerification().addOnSuccessListener(new OnSuccessListener<Void>()
+                {
+                    @Override
+                    public void onSuccess(Void unused)
+                    {
+                        Toast.makeText(RegistrationActivity.this, "Sikeres regisztráció!\n A megerősítő emailt elküldtük!", Toast.LENGTH_SHORT).show();
+                    }
+                }).addOnFailureListener(new OnFailureListener()
+                {
+                    @Override
+                    public void onFailure(@NonNull Exception e)
+                    {
+                        Log.d("RegistrationActivity", "Hiba: Email nem lett elküldve! "+e.getMessage());
+                    }
+                });
             } else
             {
                 Exception e = task.getException();

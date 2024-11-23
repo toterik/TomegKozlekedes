@@ -25,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        if (FirebaseAuth.getInstance().getCurrentUser() != null)
+            System.out.println(FirebaseAuth.getInstance().getCurrentUser().isEmailVerified());
     }
 
     public void registrationActivity(View view)

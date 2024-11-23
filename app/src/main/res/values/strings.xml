@@ -15,4 +15,5 @@
     <string name="booking">Lefoglal</string>
     <string name="delete">Törlés</string>
     <string name="passwdagain">Jelszó megerősítése</string>
+    <string name="resend_verification_email">Resend Verification Email</string>
 </resources>
