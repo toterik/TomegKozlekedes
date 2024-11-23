@@ -16,4 +16,8 @@
     <string name="delete">Törlés</string>
     <string name="passwdagain">Jelszó megerősítése</string>
     <string name="resend_verification_email">Resend Verification Email</string>
+    <string name="forgot_password">Elfelejtette jelszavát?</string>
+    <string name="resend_password">Resend Password</string>
+    <string name="resend_email_text">Enter your email associated with your account to change your password</string>
+    <string name="find_your_account">Find Your account</string>
 </resources>

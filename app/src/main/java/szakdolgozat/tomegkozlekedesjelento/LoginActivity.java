@@ -11,20 +11,24 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.Firebase;
+
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 
 public class LoginActivity extends AppCompatActivity
 {
-    FirebaseUser user;
-    FirebaseAuth mAuth;
+    private FirebaseUser user;
+    private FirebaseAuth firebaseAuth;
+    private EditText emailEditText;
+    private EditText passwordEditText;
     protected void onCreate(Bundle savedInstanceState)
     {
-        mAuth = FirebaseAuth.getInstance();
+        firebaseAuth = FirebaseAuth.getInstance();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
@@ -32,15 +36,15 @@ public class LoginActivity extends AppCompatActivity
         resendButton.setVisibility(View.INVISIBLE);
     }
 
-    public void cancel(View view)
+    public void forgotPasswordActivity(View view)
     {
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, ForgotPasswordActivity.class);
         startActivity(intent);
     }
     public void login(View view)
     {
-        EditText emailEditText = findViewById(R.id.email);
-        EditText passwordEditText = findViewById(R.id.password);
+        emailEditText = findViewById(R.id.email);
+        passwordEditText = findViewById(R.id.password);
         String email = emailEditText.getText().toString();
         String password = passwordEditText.getText().toString();
 
@@ -51,11 +55,11 @@ public class LoginActivity extends AppCompatActivity
             return;
         }
 
-        mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this, task ->
+        firebaseAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this, task ->
         {
             if (task.isSuccessful())
             {
-                user = mAuth.getCurrentUser();
+                user = firebaseAuth.getCurrentUser();
                 if (user.isEmailVerified())
                 {
                     Toast.makeText(LoginActivity.this, "Authentication successful.", Toast.LENGTH_SHORT).show();
@@ -78,14 +82,13 @@ public class LoginActivity extends AppCompatActivity
             }
         });
     }
-    public void registration(View view)
+    public void registrationActivity(View view)
     {
         Intent intent = new Intent(this, RegistrationActivity.class);
         startActivity(intent);
     }
     public void resendVerificationEmail(View view)
     {
-
         user.sendEmailVerification().addOnSuccessListener(new OnSuccessListener<Void>()
         {
             @Override
