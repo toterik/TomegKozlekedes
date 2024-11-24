@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -13,6 +14,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -41,21 +44,25 @@ public class ForgotPasswordActivity extends AppCompatActivity
 
         if (!emailAddress.isEmpty())
         {
-            auth.sendPasswordResetEmail(emailAddress).addOnCompleteListener(new OnCompleteListener<Void>()
+            auth.sendPasswordResetEmail(emailAddress).addOnSuccessListener(new OnSuccessListener<Void>()
             {
                 @Override
-                public void onComplete(@NonNull Task<Void> task)
+                public void onSuccess(Void unused)
                 {
-                    if (task.isSuccessful())
-                    {
-                        Log.d("ForgotPassworldActivity", "Email sent.");
-                    }
+                    Toast.makeText(ForgotPasswordActivity.this, "Email has been sent!", Toast.LENGTH_SHORT).show();
+                }
+            }).addOnFailureListener(new OnFailureListener()
+            {
+                @Override
+                public void onFailure(@NonNull Exception e)
+                {
+                    Toast.makeText(ForgotPasswordActivity.this, "Wrong email!", Toast.LENGTH_SHORT).show();
                 }
             });
         }
         else
         {
-            System.out.println("asd");
+            Toast.makeText(ForgotPasswordActivity.this, "Email is empty! Try again!", Toast.LENGTH_SHORT).show();
         }
     }
 }

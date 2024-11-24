@@ -10,7 +10,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,9 +23,6 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-        if (FirebaseAuth.getInstance().getCurrentUser() != null)
-            System.out.println(FirebaseAuth.getInstance().getCurrentUser().isEmailVerified());
     }
 
     public void registrationActivity(View view)
@@ -38,6 +34,12 @@ public class MainActivity extends AppCompatActivity {
     public void LoginActivitiy(View view)
     {
         Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+    }
+
+    public void MapsActivity(View view)
+    {
+        Intent intent = new Intent(this, MapsActivity.class);
         startActivity(intent);
     }
 }
