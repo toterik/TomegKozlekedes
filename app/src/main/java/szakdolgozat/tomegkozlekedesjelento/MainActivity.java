@@ -1,20 +1,11 @@
 package szakdolgozat.tomegkozlekedesjelento;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.MenuInflater;
-import android.view.View;
-
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import android.view.Menu;
-import android.view.MenuItem;
-
-import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends MenuForAllActivity
 {
