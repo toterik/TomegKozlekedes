@@ -3,6 +3,7 @@ package szakdolgozat.tomegkozlekedesjelento;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -21,7 +22,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 
-public class RegistrationActivity extends AppCompatActivity
+public class RegistrationActivity extends MenuForAllActivity
 {
     private FirebaseAuth mAuth;
 
@@ -30,6 +31,9 @@ public class RegistrationActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
     }
 
     public void registrationByEmailAndPassword(View view)

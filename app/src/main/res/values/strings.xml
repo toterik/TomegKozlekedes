@@ -1,24 +1,21 @@
 <resources>
-    <string name="app_name">Tömeg Közlekedés Jelentő</string>
-    <string name="item_1">Kezdőoldal</string>
-    <string name="item_2">Foglalás</string>
-    <string name="title_activity_main2">MainActivity2</string>
-    <string name="title_activity_hajofoglalas">Hajofoglalas</string>
-    <string name="title_activity_register">RegisterActivity</string>
-    <string name="logout">Kijelentkezés</string>
-    <string name="login">Bejelentkezés</string>
-    <string name="rendezés">Sort</string>
-    <string name="register">Regisztráció</string>
-    <string name="cancel">Mégse</string>
-    <string name="password">Jelszó</string>
+    <string name="app_name">Public Transport Report</string>
+    <string name="map">Map</string>
+    <string name="logout">Logout</string>
+    <string name="login">Login</string>
+    <string name="sort">Sort</string>
+    <string name="register">Registration</string>
+    <string name="cancel">Cancel</string>
+    <string name="password">Password</string>
     <string name="email">Email</string>
-    <string name="booking">Lefoglal</string>
-    <string name="delete">Törlés</string>
-    <string name="passwdagain">Jelszó megerősítése</string>
+    <string name="delete">Delete</string>
+    <string name="password_again">Confirm Password</string>
     <string name="resend_verification_email">Resend Verification Email</string>
-    <string name="forgot_password">Elfelejtette jelszavát?</string>
+    <string name="forgot_password">Forgot Password?</string>
     <string name="resend_password">Resend Password</string>
     <string name="resend_email_text">Enter your email associated with your account to change your password</string>
     <string name="find_your_account">Find Your account</string>
     <string name="title_activity_maps">MapsActivity</string>
+    <string name="jelentesek">Reports</string>
+
 </resources>
