@@ -17,5 +17,10 @@
     <string name="find_your_account">Find Your account</string>
     <string name="title_activity_maps">MapsActivity</string>
     <string name="jelentesek">Reports</string>
+    <string name="full">Full</string>
+    <string name="replacement">Replacement</string>
+    <string name="other">Other</string>
+    <string name="late">Late</string>
+    <string name="substitute">Substitute</string>
 
 </resources>
