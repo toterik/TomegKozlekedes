@@ -22,5 +22,28 @@
     <string name="other">Other</string>
     <string name="late">Late</string>
     <string name="substitute">Substitute</string>
+    <string name="report_details">Report Details</string>
+    <string name="add_details_about_the_problem">Add details about the problem</string>
+    <string name="mean_of_transport">Mean of Transport:</string>
+    <string name="destination">Destination:</string>
+    <string name="send">Send</string>
+    <string name="type_of_problem">Type of problem:</string>
+    <string name="budapest">Budapest</string>
+    <string name="delay_duration">Expected delay duration (min):</string>
+
+    <string-array name="means_of_transport">
+        <item>Bus</item>
+        <item>Train</item>
+        <item>Trolley</item>
+        <item>Tram</item>
+        <item>Airplane</item>
+    </string-array>
+    <string-array name="type_of_problem">
+        <item>Late</item>
+        <item>Full</item>
+        <item>Replacement</item>
+        <item>Other</item>
+    </string-array>
+
 
 </resources>

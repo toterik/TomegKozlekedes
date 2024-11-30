@@ -3,9 +3,15 @@ package szakdolgozat.tomegkozlekedesjelento;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.internal.maps.zzah;
@@ -18,6 +24,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -51,6 +58,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private ArrayList<Marker> markersList = new ArrayList<>();
     private Toolbar reportToolbar;
     public boolean reportToolbarShowing = false;
+    private Marker currentMarker;
+    private boolean userIsLoggedIn = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -63,6 +73,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         //Get database instance
         db =  FirebaseFirestore.getInstance();
 
+        userIsLoggedIn = FirebaseAuth.getInstance().getCurrentUser() != null;
+
+
         //set the menu toolbar
         Toolbar menuToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(menuToolbar);
@@ -70,10 +83,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
-
-        //hide report menu until user clicks on map
-        reportToolbar = findViewById(R.id.report_toolbar);
-        reportToolbar.setVisibility(View.INVISIBLE);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -94,44 +103,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         //zoom and rotation settings on the map
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
-
-        //addReport();
-        //addMarkerToDatabaseOnMapClick();
     }
     public void showReportToolbar(View view)
     {
-        if (!this.reportToolbarShowing)
-        {
-            reportToolbar.setVisibility(View.VISIBLE);
-        }
-        else
-        {
-            reportToolbar.setVisibility(View.INVISIBLE);
-        }
-        this.reportToolbarShowing = !this.reportToolbarShowing;
-    }
-
-
-    public void addMarkerOnClick()
-    {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        boolean userIsLoggedIn = user != null;
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener()
-        {
-            @Override
-            public void onMapClick(LatLng point)
-            {
-                if (userIsLoggedIn)
-                {
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point,10));   
-                    markersList.add(mMap.addMarker(new MarkerOptions().position(point)));
-                }
-                else
-                {
-                    Toast.makeText(MapsActivity.this, "You need to be logged in to add marker!", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        if (userIsLoggedIn) startProblemReport();
+        else Toast.makeText(this, "You need to login to report a problem", Toast.LENGTH_SHORT).show();
     }
 
 
@@ -155,68 +131,141 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
     }
 
-
-    public void addMarkerToDatabaseOnMapClick()
+    public void startProblemReport()
     {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        boolean userIsLoggedIn = user != null;
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener()
-        {
-            @Override
-            public void onMapClick(LatLng point)
-            {
-                if (userIsLoggedIn)
-                {
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("latitude", point.latitude);
-                    data.put("longitude", point.longitude);
-                    data.put("uid", user.getUid());
+        Toast.makeText(this, "Select a location on the map", Toast.LENGTH_SHORT).show();
 
-                    db.collection("markers")
-                            .add(data)
-                            .addOnSuccessListener(new OnSuccessListener<DocumentReference>()
-                            {
-                                @Override
-                                public void onSuccess(DocumentReference documentReference)
-                                {
-                                    Toast.makeText(MapsActivity.this, "Successfully added Marker!", Toast.LENGTH_SHORT).show();
-                                    mMap.addMarker(new MarkerOptions().position(new LatLng(point.latitude,point.longitude)));
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener()
-                            {
-                                @Override
-                                public void onFailure(@NonNull Exception e)
-                                {
-                                    Toast.makeText(MapsActivity.this, "Error adding marker!", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                }
-                else
-                {
-                    Toast.makeText(MapsActivity.this, "You need to be logged in to add marker!", Toast.LENGTH_SHORT).show();
-                }
+        mMap.setOnMapClickListener(point -> {
+            if (currentMarker != null) {
+                currentMarker.remove();
+            }
+            currentMarker = mMap.addMarker(new MarkerOptions()
+                    .position(point)
+                    .draggable(true)
+                    .title("Drag to adjust location"));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, 10));
+            // show the report details dialog
+            openReportSheetDialog();
+        });
+
+        mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDragStart(Marker marker) {}
+            @Override
+            public void onMarkerDrag(Marker marker) {}
+            @Override
+            public void onMarkerDragEnd(Marker marker) {
+                currentMarker = marker;
             }
         });
     }
 
-    public void reportLate(View view)
+    public void openReportSheetDialog()
     {
-        addMarkerOnClick();
-    }
+        if (currentMarker == null) {
+            Toast.makeText(this, "Please place a marker on the map first.", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-    public void reportFull(View view)
-    {
-        addMarkerOnClick();
-    }
+        // Create and inflate the bottom sheet layout
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.layout_bottom_sheet_report_details, null);
+        bottomSheetDialog.setContentView(sheetView);
 
-    public void reportSubstitute(View view)
-    {
-        addMarkerOnClick();
-    }
+        //set means of transport spinner
+        Spinner spinnerTransport = (Spinner) sheetView.findViewById(R.id.spinner_transport);
+        // Create an ArrayAdapter using the string array and a default spinner layout.
+        ArrayAdapter<CharSequence> adapterTransport = ArrayAdapter.createFromResource(
+                this,
+                R.array.means_of_transport,
+                android.R.layout.simple_spinner_item
+        );
+        // Specify the layout to use when the list of choices appears.
+        adapterTransport.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner.
+        spinnerTransport.setAdapter(adapterTransport);
 
-    public void reportOther(View view)
+
+        //set type of problem spinner
+        Spinner spinnerProblem = (Spinner) sheetView.findViewById(R.id.spinner_problem_type);
+        // Create an ArrayAdapter using the string array and a default spinner layout.
+        ArrayAdapter<CharSequence> adapterProblem = ArrayAdapter.createFromResource(
+                this,
+                R.array.type_of_problem,
+                android.R.layout.simple_spinner_item
+        );
+        // Specify the layout to use when the list of choices appears.
+        adapterProblem.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner.
+        spinnerProblem.setAdapter(adapterProblem);
+
+
+        EditText detailsEditText = sheetView.findViewById(R.id.et_problem_details);
+        EditText destinationEditText = sheetView.findViewById(R.id.et_destination);
+        EditText delayEditText = sheetView.findViewById(R.id.et_delay_duration);
+
+        Button cancelButton = sheetView.findViewById(R.id.btn_cancel);
+        cancelButton.setOnClickListener(v ->
+        {
+            bottomSheetDialog.dismiss();
+            //remove marker if canceled
+            if (currentMarker != null) {
+                currentMarker.remove();
+                currentMarker = null;
+            }
+        });
+
+        Button submitButton = sheetView.findViewById(R.id.btn_submit);
+        submitButton.setOnClickListener(v ->
+        {
+            String problemDetails = detailsEditText.getText().toString();
+            String destination = destinationEditText.getText().toString();
+            String meanOfTransport = spinnerTransport.getSelectedItem().toString();
+            String problemType = spinnerProblem.getSelectedItem().toString();
+            int delay;
+            try
+            {
+                delay = Integer.parseInt(delayEditText.getText().toString());
+            }catch (Exception e)
+            {
+                Toast.makeText(this, "Please provide a number in the duration (0 if there is no delay)", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (destination.isEmpty())
+            {
+                Toast.makeText(this, "Please provide details about the problem.", Toast.LENGTH_SHORT).show();
+            } else
+            {
+                submitReport(meanOfTransport, problemType, destination,delay,problemDetails, currentMarker.getPosition());
+                bottomSheetDialog.dismiss();
+            }
+        });
+
+        // Show the bottom sheet dialog
+        bottomSheetDialog.show();
+    }
+    public void submitReport(String meanOfTransport,String problemType,String destination,int delay, String problemDetails, LatLng position)
     {
-        addMarkerOnClick();
+        Map<String, Object> reportData = new HashMap<>();
+        reportData.put("mean_of_transport", meanOfTransport);
+        reportData.put("type", problemType);
+        reportData.put("destination", destination);
+        reportData.put("delay", delay);
+        reportData.put("description", problemDetails);
+        reportData.put("latitude", position.latitude);
+        reportData.put("longitude", position.longitude);
+        reportData.put("uid", FirebaseAuth.getInstance().getCurrentUser().getUid());
+
+        db.collection("reports")
+                .add(reportData)
+                .addOnSuccessListener(documentReference ->
+                {
+                    Toast.makeText(this, "Report submitted successfully!", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e ->
+                {
+                    Toast.makeText(this, "Failed to submit report.", Toast.LENGTH_SHORT).show();
+                });
     }
 }
