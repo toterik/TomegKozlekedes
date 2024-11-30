@@ -2,8 +2,12 @@ package szakdolgozat.tomegkozlekedesjelento;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -15,6 +19,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.internal.maps.zzah;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -40,7 +46,8 @@ import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
-
+import android.Manifest;
+import android.Manifest.permission;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +59,7 @@ import szakdolgozat.tomegkozlekedesjelento.databinding.ActivityMapsBinding;
 public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallback
 {
 
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     private FirebaseFirestore db;
@@ -60,7 +68,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     public boolean reportToolbarShowing = false;
     private Marker currentMarker;
     private boolean userIsLoggedIn = false;
-
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    private LatLng userCurrentLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -83,34 +92,80 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
+    @SuppressLint("MissingPermission")
+    private void enableMyLocation()
+    {
+        // 1. Check if permissions are granted, if so, enable the my location layer
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+            return;
+        }
+
+        // 2. Otherwise, request location permissions from the user.
+        requestPermissions(new String[]{permission.ACCESS_COARSE_LOCATION,permission.ACCESS_FINE_LOCATION},LOCATION_PERMISSION_REQUEST_CODE);
+    }
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
         mMap = googleMap;
 
+
+        enableMyLocation();
+        fetchAndMarkCurrentLocation();
+
         //gets the marker positions from the database and displays them
         displayAllMarkers();
 
-        //moves the camera to a specific position
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(47.1625, 19.5033),10));
 
         //zoom and rotation settings on the map
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
+    }
+    @SuppressLint("MissingPermission")
+    private void fetchAndMarkCurrentLocation() {
+        fusedLocationProviderClient.getLastLocation().addOnCompleteListener(this, task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                Location location = task.getResult();
+                userCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+
+                // Add a marker at the user's current location
+                mMap.addMarker(new MarkerOptions()
+                        .position(userCurrentLocation)
+                        .title("You are here"));
+
+                // Move the camera to the user's location
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userCurrentLocation, mMap.getCameraPosition().zoom));
+            }
+        });
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                enableMyLocation();
+            } else
+            {
+                Toast.makeText(this, "Location permission is required to use this feature.", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        }
     }
     public void showReportToolbar(View view)
     {
         if (userIsLoggedIn) startProblemReport();
         else Toast.makeText(this, "You need to login to report a problem", Toast.LENGTH_SHORT).show();
     }
-
-
     public void displayAllMarkers() {
         var markers = db.collection("markers");
         markers.get().addOnSuccessListener(queryDocumentSnapshots -> {
@@ -130,7 +185,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         });
 
     }
-
     public void startProblemReport()
     {
         Toast.makeText(this, "Select a location on the map", Toast.LENGTH_SHORT).show();
@@ -159,7 +213,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             }
         });
     }
-
     public void openReportSheetDialog()
     {
         if (currentMarker == null) {
