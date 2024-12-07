@@ -3,6 +3,7 @@ package szakdolgozat.tomegkozlekedesjelento;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -58,7 +59,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
@@ -84,7 +84,7 @@ import java.util.Map;
 
 import szakdolgozat.tomegkozlekedesjelento.databinding.ActivityMapsBinding;
 
-public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallback
+public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallback, GoogleMap.InfoWindowAdapter
 {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private GoogleMap mMap;
@@ -99,6 +99,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private Spinner spinnerTransport;
     private Spinner spinnerProblem;
     private Place destinationPlace;
+    private Geocoder geocoder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -124,6 +125,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         }
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+        geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -175,6 +178,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
         fetchCurrentLocation();
 
+        // Set custom InfoWindowAdapter
+        mMap.setInfoWindowAdapter(this);
+
         //gets the marker positions from the database and displays them
         displayAllMarkers();
 
@@ -215,17 +221,57 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         if (userIsLoggedIn) openReportSheetDialog();
         else Toast.makeText(this, "You need to login to report a problem", Toast.LENGTH_SHORT).show();
     }
-    public void displayAllMarkers() {
-        var markers = db.collection("markers");
+    public void displayAllMarkers()
+    {
+        var markers = db.collection("reports");
         markers.get().addOnSuccessListener(queryDocumentSnapshots -> {
-            for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+            for (QueryDocumentSnapshot document : queryDocumentSnapshots)
+            {
                 Map<String, Object> currentItem = document.getData();
-                String uid = currentItem.get("uid").toString();
-                double latitude = (Double) currentItem.get("latitude");
-                double longitude = (Double) currentItem.get("longitude");
+                String meanOfTransport = (String) currentItem.get("mean_of_transport");
+                String type = (String) currentItem.get("type");
+                String description = (String) currentItem.get("description");
+                long delay = (long) currentItem.get("delay");
+                double startingLatitude = (Double) currentItem.get("starting_latitude");
+                double startinglongitude = (Double) currentItem.get("starting_longitude");
+                double destinationLatitude = (Double) currentItem.get("destination_latitude");
+                double destinationlongitude = (Double) currentItem.get("destination_longitude");
 
-                LatLng latLng = new LatLng(latitude, longitude);
-                this.markersList.add(mMap.addMarker(new MarkerOptions().position(latLng)));
+                List<Address> destinationAddress = null;
+                List<Address> startingAddress = null;
+                try
+                {
+                    startingAddress = geocoder.getFromLocation(startingLatitude, startinglongitude, 1);
+                    destinationAddress = geocoder.getFromLocation(destinationLatitude, destinationlongitude, 1);
+                } catch (IOException e)
+                {
+                    throw new RuntimeException(e);
+                }
+
+
+                String markerTitle = "Type: " + type + "\n" +
+                        "Transport: " + meanOfTransport + "\n" +
+                        "Description: " + description + "\n" +
+                        "Delay: " + delay + " minutes\n" +
+                        "Destination:"+destinationAddress.get(0).getLocality()+" \n. ";
+                LatLng startinglatLng = new LatLng(startingLatitude, startinglongitude);
+                this.markersList.add(mMap.addMarker(new MarkerOptions()
+                        .position(startinglatLng)
+                        .title("Starting Marker")
+                        .snippet(markerTitle)));
+
+                markerTitle = "Type: " + type + "\n" +
+                        "Transport: " + meanOfTransport + "\n" +
+                        "Description: " + description + "\n" +
+                        "Delay: " + delay + " minutes\n" +
+                        "Starting city:"+startingAddress.get(0).getLocality()+" \n. ";
+                LatLng destinationlatLng = new LatLng(destinationLatitude, destinationlongitude);
+                this.markersList.add(mMap.addMarker(new MarkerOptions()
+                        .position(destinationlatLng)
+                        .title("Destination Marker")
+                        .snippet(markerTitle)));
+
+
             }
             Log.d("MarkersList", "Marker list size: " + markersList.size());
         }).addOnFailureListener(e ->
@@ -345,7 +391,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         autocompleteSupportFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
         autocompleteSupportFragment.setTypeFilter(TypeFilter.CITIES);
-        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
         List<Address> address = null;
         try
         {
@@ -373,7 +418,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             public void onPlaceSelected(@NonNull Place place)
             {
                 destinationPlace = place;
-                Log.i("asd",place.toString());
             }
         });
     }
@@ -402,5 +446,28 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 {
                     Toast.makeText(this, "Failed to submit report.", Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    @Nullable
+    @Override
+    public View getInfoContents(@NonNull Marker marker)
+    {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public View getInfoWindow(@NonNull Marker marker) {
+        // Inflate custom layout
+        View infoWindow = getLayoutInflater().inflate(R.layout.custom_info_window, null);
+
+        // Populate title and snippet
+        TextView title = infoWindow.findViewById(R.id.title);
+        TextView snippet = infoWindow.findViewById(R.id.snippet);
+
+        title.setText(marker.getTitle());
+        snippet.setText(marker.getSnippet());
+
+        return infoWindow;
     }
 }
