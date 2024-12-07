@@ -5,6 +5,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -87,6 +90,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     private FirebaseFirestore db;
+    private AutocompleteSupportFragment autocompleteSupportFragment;
     private ArrayList<Marker> markersList = new ArrayList<>();
     private Marker currentMarker;
     private boolean userIsLoggedIn = false;
@@ -271,42 +275,60 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         View sheetView = getLayoutInflater().inflate(R.layout.layout_bottom_sheet_report_details, null);
         bottomSheetDialog.setContentView(sheetView);
+        bottomSheetDialog.setCanceledOnTouchOutside(false);
 
-        AutocompleteSupportFragment autocompleteSupportFragment = (AutocompleteSupportFragment)
-               getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
-        autocompleteSupportFragment.setTypeFilter(TypeFilter.CITIES);
+        setupAutoCompleteFragment();
 
-        autocompleteSupportFragment.setLocationBias(RectangularBounds.newInstance(
-               new LatLng(userCurrentLocation.latitude,userCurrentLocation.longitude),
-               new LatLng(47.1625,19.5033)
-        ));
-        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-        List<Address> address = null;
-        try
+        setupSpinnersForReportSheet(sheetView);
+
+        EditText detailsEditText = sheetView.findViewById(R.id.et_problem_details);
+        EditText delayEditText = sheetView.findViewById(R.id.et_delay_duration);
+        Button cancelButton = sheetView.findViewById(R.id.btn_cancel);
+
+        cancelButton.setOnClickListener(v ->
         {
-            address = geocoder.getFromLocation(userCurrentLocation.latitude,userCurrentLocation.longitude,1);
-        } catch (IOException e)
-        {
-            throw new RuntimeException(e);
-        }
-        var country = address.get(0);
-        autocompleteSupportFragment.setCountries(country.getCountryCode());
-        autocompleteSupportFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
-        autocompleteSupportFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
-        {
-            @Override
-            public void onError(@NonNull Status status)
+            bottomSheetDialog.dismiss();
+            if (currentMarker != null)
             {
-                Log.i("error",status.toString());
+                currentMarker.remove();
+                currentMarker = null;
             }
-
-            @Override
-            public void onPlaceSelected(@NonNull Place place)
-            {
-                Log.i("tag", "Place: ${place.name}, ${place.id}");
-            }
+            removeAutoFragment();
         });
 
+        Button submitButton = sheetView.findViewById(R.id.btn_submit);
+        submitButton.setOnClickListener(v ->
+        {
+            String problemDetails = detailsEditText.getText().toString();
+            //String meanOfTransport = spinnerTransport.getSelectedItem().toString();
+            //String problemType = spinnerProblem.getSelectedItem().toString();
+            int delay;
+            try
+            {
+                delay = Integer.parseInt(delayEditText.getText().toString());
+            }catch (Exception e)
+            {
+                Toast.makeText(this, "Please provide a number in the duration (0 if there is no delay)", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            bottomSheetDialog.dismiss();
+            removeAutoFragment();
+
+        });
+
+        // Show the bottom sheet dialog
+        bottomSheetDialog.show();
+    }
+
+    private void removeAutoFragment()
+    {
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.remove(autocompleteSupportFragment);
+        fragmentTransaction.commit();
+    }
+
+    private void setupSpinnersForReportSheet(View sheetView)
+    {
 
         //set means of transport spinner
         Spinner spinnerTransport = (Spinner) sheetView.findViewById(R.id.spinner_transport);
@@ -334,47 +356,41 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         adapterProblem.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Apply the adapter to the spinner.
         spinnerProblem.setAdapter(adapterProblem);
-
-
-        EditText detailsEditText = sheetView.findViewById(R.id.et_problem_details);
-        EditText delayEditText = sheetView.findViewById(R.id.et_delay_duration);
-
-        Button cancelButton = sheetView.findViewById(R.id.btn_cancel);
-        cancelButton.setOnClickListener(v ->
-        {
-            bottomSheetDialog.dismiss();
-            //remove marker if canceled
-            if (currentMarker != null) {
-                currentMarker.remove();
-                currentMarker = null;
-            }
-            selectReportLocation();
-        });
-
-        Button submitButton = sheetView.findViewById(R.id.btn_submit);
-        submitButton.setOnClickListener(v ->
-        {
-            String problemDetails = detailsEditText.getText().toString();
-            String meanOfTransport = spinnerTransport.getSelectedItem().toString();
-            String problemType = spinnerProblem.getSelectedItem().toString();
-            int delay;
-            try
-            {
-                delay = Integer.parseInt(delayEditText.getText().toString());
-            }catch (Exception e)
-            {
-                Toast.makeText(this, "Please provide a number in the duration (0 if there is no delay)", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            bottomSheetDialog.dismiss();
-            selectReportLocation();
-
-        });
-
-        // Show the bottom sheet dialog
-        bottomSheetDialog.show();
     }
+
+    private void setupAutoCompleteFragment()
+    {
+        autocompleteSupportFragment = (AutocompleteSupportFragment)
+                getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+        autocompleteSupportFragment.setTypeFilter(TypeFilter.CITIES);
+        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+        List<Address> address = null;
+        try
+        {
+            address = geocoder.getFromLocation(userCurrentLocation.latitude,userCurrentLocation.longitude,1);
+        } catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        var country = address.get(0);
+        autocompleteSupportFragment.setCountries(country.getCountryCode());
+        autocompleteSupportFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
+        autocompleteSupportFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
+        {
+            @Override
+            public void onError(@NonNull Status status)
+            {
+                Log.i("error",status.toString());
+            }
+
+            @Override
+            public void onPlaceSelected(@NonNull Place place)
+            {
+                Log.i("tag", "Place: ${place.name}, ${place.id}");
+            }
+        });
+    }
+
     public void submitReport(String meanOfTransport,String problemType,String destination,int delay, String problemDetails, LatLng position)
     {
         Map<String, Object> reportData = new HashMap<>();
