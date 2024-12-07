@@ -27,7 +27,7 @@
         android:layout_gravity="bottom|start"
         android:layout_marginStart="0dp"
         android:layout_marginBottom="20dp"
-        android:onClick="showReportToolbar"
+        android:onClick="startProblemReport"
         android:src="@drawable/report_img" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

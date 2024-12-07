@@ -30,6 +30,7 @@
     <string name="type_of_problem">Type of problem:</string>
     <string name="budapest">Budapest</string>
     <string name="delay_duration">Expected delay duration (min):</string>
+    <string name="_30">30</string>
 
     <string-array name="means_of_transport">
         <item>Bus</item>

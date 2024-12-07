@@ -30,6 +30,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 secrets {
@@ -67,4 +68,5 @@ dependencies {
     implementation libs.firebase.auth.v2130
     implementation libs.firebase.database.v2033
     implementation libs.play.services.location
+    implementation libs.places
 }
