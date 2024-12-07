@@ -96,6 +96,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private boolean userIsLoggedIn = false;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LatLng userCurrentLocation;
+    private Spinner spinnerTransport;
+    private Spinner spinnerProblem;
+    private Place destinationPlace;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -170,7 +173,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         //if there is no permission, the user is sent back to the main page
         enableMyLocation();
 
-        fetchAndMarkCurrentLocation();
+        fetchCurrentLocation();
 
         //gets the marker positions from the database and displays them
         displayAllMarkers();
@@ -182,17 +185,12 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     }
 
     @SuppressLint("MissingPermission")
-    private void fetchAndMarkCurrentLocation()
+    private void fetchCurrentLocation()
     {
         fusedLocationProviderClient.getLastLocation().addOnCompleteListener(this, task -> {
             if (task.isSuccessful() && task.getResult() != null) {
                 Location location = task.getResult();
                 userCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-
-                // Add a marker at the user's current location
-                mMap.addMarker(new MarkerOptions()
-                        .position(userCurrentLocation)
-                        .title("You are here"));
 
                 // Move the camera to the user's location
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userCurrentLocation, 11));
@@ -214,7 +212,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     }
     public void startProblemReport(View view)
     {
-        if (userIsLoggedIn) selectReportLocation();
+        if (userIsLoggedIn) openReportSheetDialog();
         else Toast.makeText(this, "You need to login to report a problem", Toast.LENGTH_SHORT).show();
     }
     public void displayAllMarkers() {
@@ -236,36 +234,14 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         });
 
     }
-    public void selectReportLocation()
-    {
-        Toast.makeText(this, "Select a location on the map", Toast.LENGTH_SHORT).show();
-
-        mMap.setOnMapClickListener(point -> {
-            if (currentMarker != null) {
-                currentMarker.remove();
-            }
-            currentMarker = mMap.addMarker(new MarkerOptions()
-                    .position(point)
-                    .draggable(true)
-                    .title("Drag to adjust location"));
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, 10));
-            // show the report details dialog
-            openReportSheetDialog();
-        });
-
-        mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
-            @Override
-            public void onMarkerDragStart(Marker marker) {}
-            @Override
-            public void onMarkerDrag(Marker marker) {}
-            @Override
-            public void onMarkerDragEnd(Marker marker) {
-                currentMarker = marker;
-            }
-        });
-    }
     public void openReportSheetDialog()
     {
+        currentMarker = mMap.addMarker(new MarkerOptions()
+                .position(userCurrentLocation)
+                .draggable(false)
+                .title("This is your location"));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentMarker.getPosition(), 10));
+
         if (currentMarker == null) {
             Toast.makeText(this, "Please place a marker on the map first.", Toast.LENGTH_SHORT).show();
             return;
@@ -299,9 +275,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         Button submitButton = sheetView.findViewById(R.id.btn_submit);
         submitButton.setOnClickListener(v ->
         {
-            String problemDetails = detailsEditText.getText().toString();
-            //String meanOfTransport = spinnerTransport.getSelectedItem().toString();
-            //String problemType = spinnerProblem.getSelectedItem().toString();
+            //get input datas
+            String meanOfTransport = spinnerTransport.getSelectedItem().toString();
+            String problemType = spinnerProblem.getSelectedItem().toString();
             int delay;
             try
             {
@@ -311,6 +287,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 Toast.makeText(this, "Please provide a number in the duration (0 if there is no delay)", Toast.LENGTH_SHORT).show();
                 return;
             }
+            String problemDetails = detailsEditText.getText().toString();
+
+            submitReport(meanOfTransport,problemType,delay,problemDetails);
             bottomSheetDialog.dismiss();
             removeAutoFragment();
 
@@ -325,13 +304,16 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.remove(autocompleteSupportFragment);
         fragmentTransaction.commit();
+        if (currentMarker != null) {
+            currentMarker.remove();
+        }
     }
 
     private void setupSpinnersForReportSheet(View sheetView)
     {
 
         //set means of transport spinner
-        Spinner spinnerTransport = (Spinner) sheetView.findViewById(R.id.spinner_transport);
+        spinnerTransport = (Spinner) sheetView.findViewById(R.id.spinner_transport);
         // Create an ArrayAdapter using the string array and a default spinner layout.
         ArrayAdapter<CharSequence> adapterTransport = ArrayAdapter.createFromResource(
                 this,
@@ -345,7 +327,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
 
         //set type of problem spinner
-        Spinner spinnerProblem = (Spinner) sheetView.findViewById(R.id.spinner_problem_type);
+        spinnerProblem = (Spinner) sheetView.findViewById(R.id.spinner_problem_type);
         // Create an ArrayAdapter using the string array and a default spinner layout.
         ArrayAdapter<CharSequence> adapterProblem = ArrayAdapter.createFromResource(
                 this,
@@ -374,7 +356,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         }
         var country = address.get(0);
         autocompleteSupportFragment.setCountries(country.getCountryCode());
-        autocompleteSupportFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
+        autocompleteSupportFragment.setPlaceFields(Arrays.asList(
+                Place.Field.ID,
+                Place.Field.NAME,
+                Place.Field.LAT_LNG // Include latitude and longitude explicitly
+        ));
         autocompleteSupportFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
         {
             @Override
@@ -386,22 +372,25 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             @Override
             public void onPlaceSelected(@NonNull Place place)
             {
-                Log.i("tag", "Place: ${place.name}, ${place.id}");
+                destinationPlace = place;
+                Log.i("asd",place.toString());
             }
         });
     }
 
-    public void submitReport(String meanOfTransport,String problemType,String destination,int delay, String problemDetails, LatLng position)
+    public void submitReport(String meanOfTransport,String problemType,int delay, String problemDetails)
     {
         Map<String, Object> reportData = new HashMap<>();
+        reportData.put("uid", FirebaseAuth.getInstance().getCurrentUser().getUid());
+        reportData.put("starting_latitude", userCurrentLocation.latitude);
+        reportData.put("starting_longitude", userCurrentLocation.longitude);
         reportData.put("mean_of_transport", meanOfTransport);
         reportData.put("type", problemType);
-        reportData.put("destination", destination);
+        reportData.put("destination_latitude", destinationPlace.getLocation().latitude);
+        reportData.put("destination_longitude", destinationPlace.getLocation().longitude);
         reportData.put("delay", delay);
         reportData.put("description", problemDetails);
-        reportData.put("latitude", position.latitude);
-        reportData.put("longitude", position.longitude);
-        reportData.put("uid", FirebaseAuth.getInstance().getCurrentUser().getUid());
+
 
         db.collection("reports")
                 .add(reportData)
