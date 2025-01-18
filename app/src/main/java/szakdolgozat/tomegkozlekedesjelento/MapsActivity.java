@@ -59,6 +59,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import com.google.firebase.database.core.Repo;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
@@ -77,21 +78,26 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 
 
+import szakdolgozat.tomegkozlekedesjelento.Model.Report;
 import szakdolgozat.tomegkozlekedesjelento.databinding.ActivityMapsBinding;
 
 public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallback, GoogleMap.InfoWindowAdapter
 {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final double TOLERANCE = 0.0001;
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     private FirebaseFirestore db;
     private AutocompleteSupportFragment autocompleteSupportFragment;
     private ArrayList<Marker> markersList = new ArrayList<>();
+    private ArrayList<Report> reportsList = new ArrayList<>();
     private Marker currentMarker;
     private boolean userIsLoggedIn = false;
     private FusedLocationProviderClient fusedLocationProviderClient;
@@ -184,10 +190,90 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         //gets the marker positions from the database and displays them
         displayAllMarkers();
 
-
         //zoom and rotation settings on the map
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
+
+        //show changes to makers (e.g. new marker is added)
+        liveMarkerTracker();
+    }
+
+    private void liveMarkerTracker()
+    {
+        db.collection("reports")
+            .addSnapshotListener(new EventListener<QuerySnapshot>()
+            {
+                @Override
+                public void onEvent(@Nullable QuerySnapshot snapshots,
+                                    @Nullable FirebaseFirestoreException e)
+                {
+                    if (e != null) {
+                        Log.w("TAG", "listen:error", e);
+                        return;
+                    }
+
+                    for (DocumentChange dc : snapshots.getDocumentChanges())
+                    {
+                        switch (dc.getType()) {
+                            case ADDED:
+                                addMarkersForReport(dc.getDocument().toObject(Report.class));
+                                break;
+                            case MODIFIED:
+                                modifyMarkerLive(dc.getDocument().getData());
+                                break;
+                            case REMOVED:
+                                removeMarkerLive(dc.getDocument().getData());
+                                break;
+                        }
+                    }
+
+                }
+            });
+    }
+
+    private void modifyMarkerLive(Map<String, Object> markerData)
+    {
+        //TODO
+        double starting_latitude = (double)markerData.get("starting_latitude");
+        double starting_longitude = (double)markerData.get("starting_longitude");
+        double destination_latitude = (double)markerData.get("destination_latitude");
+        double destination_longitude = (double)markerData.get("destination_longitude");
+
+        Iterator<Marker> iterator = markersList.iterator();
+        while (iterator.hasNext())
+        {
+            Marker marker = iterator.next();
+            LatLng markerPosition = marker.getPosition();
+
+            if (areLatLngEqual(markerPosition, new LatLng(starting_latitude, starting_longitude)) ||
+                    areLatLngEqual(markerPosition, new LatLng(destination_latitude, destination_longitude)))
+            {
+
+            }
+
+        }
+    }
+
+    private void removeMarkerLive(Map<String, Object> markerData)
+    {
+        double starting_latitude = (double)markerData.get("starting_latitude");
+        double starting_longitude = (double)markerData.get("starting_longitude");
+        double destination_latitude = (double)markerData.get("destination_latitude");
+        double destination_longitude = (double)markerData.get("destination_longitude");
+
+        Iterator<Marker> iterator = markersList.iterator();
+        while (iterator.hasNext())
+        {
+            Marker marker = iterator.next();
+            LatLng markerPosition = marker.getPosition();
+
+            if (areLatLngEqual(markerPosition, new LatLng(starting_latitude, starting_longitude)) ||
+                    areLatLngEqual(markerPosition, new LatLng(destination_latitude, destination_longitude)))
+            {
+                marker.remove();
+                iterator.remove();
+            }
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -224,61 +310,32 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     public void displayAllMarkers()
     {
         var markers = db.collection("reports");
-        markers.get().addOnSuccessListener(queryDocumentSnapshots -> {
+        markers.get().addOnSuccessListener(queryDocumentSnapshots ->
+        {
             for (QueryDocumentSnapshot document : queryDocumentSnapshots)
             {
-                Map<String, Object> currentItem = document.getData();
-                String meanOfTransport = (String) currentItem.get("mean_of_transport");
-                String type = (String) currentItem.get("type");
-                String description = (String) currentItem.get("description");
-                long delay = (long) currentItem.get("delay");
-                double startingLatitude = (Double) currentItem.get("starting_latitude");
-                double startinglongitude = (Double) currentItem.get("starting_longitude");
-                double destinationLatitude = (Double) currentItem.get("destination_latitude");
-                double destinationlongitude = (Double) currentItem.get("destination_longitude");
+                Report currentReport = document.toObject(Report.class);
+                reportsList.add(currentReport);
 
-                List<Address> destinationAddress = null;
-                List<Address> startingAddress = null;
-                try
-                {
-                    startingAddress = geocoder.getFromLocation(startingLatitude, startinglongitude, 1);
-                    destinationAddress = geocoder.getFromLocation(destinationLatitude, destinationlongitude, 1);
-                } catch (IOException e)
-                {
-                    throw new RuntimeException(e);
-                }
-
-
-                String markerTitle = "Type: " + type + "\n" +
-                        "Transport: " + meanOfTransport + "\n" +
-                        "Description: " + description + "\n" +
-                        "Delay: " + delay + " minutes\n" +
-                        "Destination:"+destinationAddress.get(0).getLocality()+" \n. ";
-                LatLng startinglatLng = new LatLng(startingLatitude, startinglongitude);
-                this.markersList.add(mMap.addMarker(new MarkerOptions()
-                        .position(startinglatLng)
-                        .title("Starting Marker")
-                        .snippet(markerTitle)));
-
-                markerTitle = "Type: " + type + "\n" +
-                        "Transport: " + meanOfTransport + "\n" +
-                        "Description: " + description + "\n" +
-                        "Delay: " + delay + " minutes\n" +
-                        "Starting city:"+startingAddress.get(0).getLocality()+" \n. ";
-                LatLng destinationlatLng = new LatLng(destinationLatitude, destinationlongitude);
-                this.markersList.add(mMap.addMarker(new MarkerOptions()
-                        .position(destinationlatLng)
-                        .title("Destination Marker")
-                        .snippet(markerTitle)));
-
-
+                addMarkersForReport(currentReport);
             }
-            Log.d("MarkersList", "Marker list size: " + markersList.size());
-        }).addOnFailureListener(e ->
-        {
+        }
+        ).addOnFailureListener(e ->{
             Log.e("Marker_Fail", "Error fetching markers", e);
         });
+    }
+    private void addMarkersForReport(Report report) {
+        // Add starting marker
+        markersList.add(mMap.addMarker(new MarkerOptions()
+                .position(new LatLng(report.getStartingLatitude(), report.getStartingLongitude()))
+                .title(report.getMarkerTitle(true))
+                .snippet(report.getMarkerSnippet(true, geocoder))));
 
+        // Add destination marker
+        markersList.add(mMap.addMarker(new MarkerOptions()
+                .position(new LatLng(report.getDestinationLatitude(), report.getDestinationLongitude()))
+                .title(report.getMarkerTitle(false))
+                .snippet(report.getMarkerSnippet(false, geocoder))));
     }
     public void openReportSheetDialog()
     {
@@ -324,18 +381,37 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             //get input datas
             String meanOfTransport = spinnerTransport.getSelectedItem().toString();
             String problemType = spinnerProblem.getSelectedItem().toString();
+            String problemDetails = detailsEditText.getText().toString();
+
+            if (destinationPlace == null)
+            {
+                Toast.makeText(this, "Please select a destination!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             int delay;
             try
             {
                 delay = Integer.parseInt(delayEditText.getText().toString());
             }catch (Exception e)
             {
-                Toast.makeText(this, "Please provide a number in the duration (0 if there is no delay)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Please provide a number in the duration! (0 if there is no delay)", Toast.LENGTH_SHORT).show();
                 return;
             }
-            String problemDetails = detailsEditText.getText().toString();
+            Random rnd = new Random();
 
-            submitReport(meanOfTransport,problemType,delay,problemDetails);
+            Report report = new Report
+                            (delay,
+                            problemDetails,
+                            destinationPlace.getLocation().latitude + (rnd.nextDouble() - 0.5) / 50,
+                            destinationPlace.getLocation().longitude + (rnd.nextDouble() - 0.5) / 50,
+                            meanOfTransport,
+                            userCurrentLocation.latitude,
+                            userCurrentLocation.longitude,
+                            problemType,
+                            FirebaseAuth.getInstance().getCurrentUser().getUid());
+            report.save(db);
+
             bottomSheetDialog.dismiss();
             removeAutoFragment();
 
@@ -422,32 +498,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         });
     }
 
-    public void submitReport(String meanOfTransport,String problemType,int delay, String problemDetails)
-    {
-        Map<String, Object> reportData = new HashMap<>();
-        reportData.put("uid", FirebaseAuth.getInstance().getCurrentUser().getUid());
-        reportData.put("starting_latitude", userCurrentLocation.latitude);
-        reportData.put("starting_longitude", userCurrentLocation.longitude);
-        reportData.put("mean_of_transport", meanOfTransport);
-        reportData.put("type", problemType);
-        reportData.put("destination_latitude", destinationPlace.getLocation().latitude);
-        reportData.put("destination_longitude", destinationPlace.getLocation().longitude);
-        reportData.put("delay", delay);
-        reportData.put("description", problemDetails);
-
-
-        db.collection("reports")
-                .add(reportData)
-                .addOnSuccessListener(documentReference ->
-                {
-                    Toast.makeText(this, "Report submitted successfully!", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e ->
-                {
-                    Toast.makeText(this, "Failed to submit report.", Toast.LENGTH_SHORT).show();
-                });
-    }
-
     @Nullable
     @Override
     public View getInfoContents(@NonNull Marker marker)
@@ -469,5 +519,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         snippet.setText(marker.getSnippet());
 
         return infoWindow;
+    }
+    private boolean areLatLngEqual(LatLng pos1, LatLng pos2) {
+        return Math.abs(pos1.latitude - pos2.latitude) < TOLERANCE &&
+                Math.abs(pos1.longitude - pos2.longitude) < TOLERANCE;
     }
 }
