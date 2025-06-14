@@ -31,6 +31,10 @@
     <string name="budapest">Budapest</string>
     <string name="delay_duration">Expected delay duration (min):</string>
     <string name="_30">30</string>
+    <string name="details">Details</string>
+    <string name="destination_city">Destination City:</string>
+    <string name="starting_city">Starting City:</string>
+    <string name="search_for_city">Search for city:</string>
 
     <string-array name="means_of_transport">
         <item>Bus</item>
@@ -44,6 +48,14 @@
         <item>Full</item>
         <item>Replacement</item>
         <item>Other</item>
+    </string-array>
+    <string-array name="filter_means_of_transport">
+        <item>All</item>
+        <item>Bus</item>
+        <item>Train</item>
+        <item>Trolley</item>
+        <item>Tram</item>
+        <item>Airplane</item>
     </string-array>
 
 

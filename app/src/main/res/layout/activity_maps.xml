@@ -12,7 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <!-- Map Fragment -->
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
@@ -29,5 +28,24 @@
         android:layout_marginBottom="20dp"
         android:onClick="startProblemReport"
         android:src="@drawable/report_img" />
+
+    <ImageView
+        android:id="@+id/img_ok"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="50dp"
+        android:layout_marginBottom="25dp"
+        android:src="@drawable/ok_icon" />
+
+    <ImageView
+        android:id="@+id/img_no"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="120dp"
+        android:layout_marginBottom="20dp"
+        android:src="@drawable/no_icon" />
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

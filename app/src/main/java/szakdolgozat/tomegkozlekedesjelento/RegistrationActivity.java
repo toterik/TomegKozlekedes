@@ -2,29 +2,30 @@ package szakdolgozat.tomegkozlekedesjelento;
 
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RegistrationActivity extends MenuForAllActivity
 {
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -32,8 +33,9 @@ public class RegistrationActivity extends MenuForAllActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
         Toolbar toolbar = findViewById(R.id.toolbar);
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
         setSupportActionBar(toolbar);
-
     }
 
     public void registrationByEmailAndPassword(View view)
@@ -68,6 +70,11 @@ public class RegistrationActivity extends MenuForAllActivity
                     @Override
                     public void onSuccess(Void unused)
                     {
+                        Map<String, Object> userData = new HashMap<>();
+                        DocumentReference documentReference = db.collection("Users").document(mAuth.getCurrentUser().getUid());
+                        userData.put("email", email);
+                        userData.put("role", "user");
+                        documentReference.set(userData);
                         Toast.makeText(RegistrationActivity.this, "Sikeres regisztráció!\n A megerősítő emailt elküldtük!", Toast.LENGTH_SHORT).show();
                     }
                 }).addOnFailureListener(new OnFailureListener()

@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -27,6 +28,8 @@ public class LoginActivity extends MenuForAllActivity
     private FirebaseAuth firebaseAuth;
     private EditText emailEditText;
     private EditText passwordEditText;
+    private Marker startingMarker;
+    private Marker destinationMarker;
     protected void onCreate(Bundle savedInstanceState)
     {
         firebaseAuth = FirebaseAuth.getInstance();

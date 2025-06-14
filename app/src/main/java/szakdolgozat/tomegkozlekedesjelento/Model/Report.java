@@ -11,11 +11,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.PropertyName;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 
 import szakdolgozat.tomegkozlekedesjelento.MapsActivity;
 
-public class Report
+public class Report implements Serializable
 {
     private int delay;
     private String description;
@@ -83,6 +84,16 @@ public class Report
     @PropertyName("delay")
     public int getDelay() {
         return delay;
+    }
+
+    public String getDocumentId()
+    {
+        return documentId;
+    }
+
+    public void setDocumentId(String documentId)
+    {
+        this.documentId = documentId;
     }
 
     @PropertyName("delay")
@@ -189,12 +200,11 @@ public class Report
                 '}';
     }
 
-    public void save(FirebaseFirestore db)
-    {
-        db.collection("reports").add(this)
-                .addOnSuccessListener(documentReference -> {
-                    Log.d("Save_Report", "Report saved with ID: " + documentId);
-                })
+    public void save(FirebaseFirestore db) {
+        String newDocId = db.collection("reports").document().getId();
+        this.documentId = newDocId;
+        db.collection("/reports/").document(newDocId).set(this)
+                .addOnSuccessListener(aVoid -> Log.d("Save_Report", "Report saved with ID: " + newDocId))
                 .addOnFailureListener(e -> Log.e("Save_Report", "Error saving report", e));
     }
 }
