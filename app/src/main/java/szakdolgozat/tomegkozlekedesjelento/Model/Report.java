@@ -6,7 +6,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.google.firebase.Firebase;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.PropertyName;
 
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 
-import szakdolgozat.tomegkozlekedesjelento.MapsActivity;
 
 public class Report implements Serializable
 {
@@ -207,4 +205,5 @@ public class Report implements Serializable
                 .addOnSuccessListener(aVoid -> Log.d("Save_Report", "Report saved with ID: " + newDocId))
                 .addOnFailureListener(e -> Log.e("Save_Report", "Error saving report", e));
     }
+
 }

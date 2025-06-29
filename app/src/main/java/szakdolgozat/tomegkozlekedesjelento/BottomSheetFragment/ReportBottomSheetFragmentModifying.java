@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentTransaction;
@@ -116,92 +117,8 @@ public class ReportBottomSheetFragmentModifying extends BottomSheetDialogFragmen
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState)
     {
-        View view = inflater.inflate(R.layout.bottom_sheet_report_modify_report, container, false);
 
-        transportType = view.findViewById(R.id.spinner_transport);
-        problemType = view.findViewById(R.id.spinner_problem_type);
-
-        detailsEditText = view.findViewById(R.id.et_problem_details);
-        delayEditText = view.findViewById(R.id.et_delay_duration);
-        startingCityEditText = view.findViewById(R.id.startingCity);
-        destinationCityEditText = view.findViewById(R.id.destinationCity);
-        Button editButton = view.findViewById(R.id.btn_edit);
-        Button deleteButton = view.findViewById(R.id.btn_delete);
-        Button cancelButton = view.findViewById(R.id.btn_cancel);
-        Button editStartMarker = view.findViewById(R.id.btn_set_start_location);
-        Button editDestinationMarker = view.findViewById(R.id.btn_set_end_location);
-
-        MapsActivity activity = (MapsActivity) getActivity();
-        if (activity != null)
-        {
-             okIMG = activity.findViewById(R.id.img_ok);
-             noIMG = activity.findViewById(R.id.img_no);
-        }
-
-        if (user == null || (!"admin".equals(role) && !report.getUid().equals(user.getUid())))
-        {
-            transportType.setEnabled(false);
-            problemType.setEnabled(false);
-            detailsEditText.setEnabled(false);
-            delayEditText.setEnabled(false);
-            editButton.setEnabled(false);
-            deleteButton.setEnabled(false);
-            startingCityEditText.setEnabled(false);
-            destinationCityEditText.setEnabled(false);
-        }
-
-        ArrayAdapter<CharSequence> adapterTransport = ArrayAdapter.createFromResource(
-                requireContext(),
-                R.array.means_of_transport,
-                android.R.layout.simple_spinner_item
-        );
-        adapterTransport.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        transportType.setAdapter(adapterTransport);
-
-        ArrayAdapter<CharSequence> adapterProblem = ArrayAdapter.createFromResource(
-                requireContext(),
-                R.array.type_of_problem,
-                android.R.layout.simple_spinner_item
-        );
-        adapterProblem.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        problemType.setAdapter(adapterProblem);
-
-        detailsEditText.setText(report.getDescription());
-        delayEditText.setText(String.valueOf(report.getDelay()));
-        startingCityEditText.setText(getCityNameFromLatLng(new LatLng(report.getStartingLatitude(),report.getStartingLongitude())));
-        destinationCityEditText.setText(getCityNameFromLatLng(new LatLng(report.getDestinationLatitude(),report.getDestinationLongitude())));
-
-        setSpinnerSelectionByValue(transportType, report.getMeanOfTransport());
-        setSpinnerSelectionByValue(problemType, report.getType());
-
-        editButton.setOnClickListener(v -> {
-            editReport();
-            dismiss();
-        });
-        editStartMarker.setOnClickListener(v ->
-        {
-            editStartMarker();
-            dismiss();
-        });
-
-        editDestinationMarker.setOnClickListener(v ->
-        {
-            editDestinationMarker();
-            dismiss();
-        });
-
-
-
-        deleteButton.setOnClickListener(v -> {
-            removePairMarkers();
-            dismiss();
-        });
-
-        cancelButton.setOnClickListener(v -> {
-            dismiss();
-        });
-
-        return view;
+        return null;
     }
 
     private void editStartMarker()
@@ -220,45 +137,9 @@ public class ReportBottomSheetFragmentModifying extends BottomSheetDialogFragmen
         noIMG.setVisibility(View.VISIBLE);
     }
 
-    private void editReport()
-    {
-        String selectedTransport = transportType.getSelectedItem().toString();
-        String selectedProblemType = problemType.getSelectedItem().toString();
-        String details = detailsEditText.getText().toString();
-        String delayText = delayEditText.getText().toString();
 
-        int delay = 0;
-        try {
-            delay = Integer.parseInt(delayText);
-        } catch (NumberFormatException e) {
-            Log.e("Edit_Report", "Hibás késés érték: " + delayText);
-        }
 
-        report.setMeanOfTransport(selectedTransport);
-        report.setType(selectedProblemType);
-        report.setDescription(details);
-        report.setDelay(delay);
-        if (destinationMarker != null)
-        {
-            report.setDestinationLongitude(destinationMarker.getPosition().longitude);
-            report.setDestinationLatitude(destinationMarker.getPosition().latitude);
-        }
-        if (startingMarker != null)
-        {
-            report.setStartingLatitude(startingMarker.getPosition().longitude);
-            report.setStartingLongitude(startingMarker.getPosition().latitude);
-        }
 
-        String docId = report.getDocumentId();
-        if (docId != null && !docId.isEmpty()) {
-            db.collection("reports").document(docId)
-                    .set(report)
-                    .addOnSuccessListener(aVoid -> Log.d("Edit_Report", "Report sikeresen frissítve"))
-                    .addOnFailureListener(e -> Log.e("Edit_Report", "Hiba történt a frissítés során", e));
-        } else {
-            Log.e("Edit_Report", "Nincs documentId beállítva, nem lehet frissíteni");
-        }
-    }
     private MarkerPair getMarkerPair()
     {
         Iterator<MarkerPair> iterator = this.markerPairs.iterator();
@@ -276,68 +157,7 @@ public class ReportBottomSheetFragmentModifying extends BottomSheetDialogFragmen
         return null;
     }
 
-    private void removePairMarkers()
-    {
-        //a kiválasztott marker törlése
-        Iterator<MarkerPair> iterator = this.markerPairs.iterator();
-        while (iterator.hasNext()) {
-            MarkerPair item = iterator.next();
-            if (selectedMarker.getId().equals(item.startMarker.getId()))
-            {
-                item.startMarker.remove();
-            }
-            else if(selectedMarker.getId().equals(item.endMarker.getId()))
-            {
-                item.endMarker.remove();
-            }
-        }
 
-        //marker párjának törlése
-        Marker pairMarker = getPairedMarker(selectedMarker);
-        selectedMarker.remove();
-
-        //marker lista párok törlése
-        if (pairMarker != null)
-        {
-            pairMarker.remove();
-
-            MarkerPair toRemove = null;
-            for (MarkerPair pair : markerPairs)
-            {
-                if ((pair.startMarker.equals(selectedMarker) && pair.endMarker.equals(pairMarker)) ||
-                        (pair.startMarker.equals(pairMarker) && pair.endMarker.equals(selectedMarker)))
-                {
-                    toRemove = pair;
-                    break;
-                }
-            }
-            if (toRemove != null) {
-                markerPairs.remove(toRemove);
-            }
-        }
-
-        //report törlése adatbázisban
-        db.collection("reports").document(report.getDocumentId()).delete()
-                .addOnSuccessListener(aVoid -> Log.d("Delete_Report", "Document successfully deleted!"))
-                .addOnFailureListener(e -> Log.e("Delete_Report", "Error deleting document", e));
-
-    }
-
-    private Marker getPairedMarker(Marker selected)
-    {
-        for (MarkerPair pair : markerPairs)
-        {
-            if (pair.startMarker.getId().equals(selected.getId()))
-            {
-                return pair.endMarker;
-            }
-            if (pair.endMarker.getId().equals(selected.getId()))
-            {
-                return pair.startMarker;
-            }
-        }
-        return null;
-    }
 
     private boolean isStartingMarker(Marker selected)
     {
@@ -372,15 +192,7 @@ public class ReportBottomSheetFragmentModifying extends BottomSheetDialogFragmen
     }
 
 
-    private void setSpinnerSelectionByValue(Spinner spinner, String value)
-    {
-        for (int i = 0; i < spinner.getCount(); i++) {
-            if (spinner.getItemAtPosition(i).toString().equals(value)) {
-                spinner.setSelection(i);
-                break;
-            }
-        }
-    }
+
 
 }
 

@@ -19,176 +19,205 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="0dp">
+        android:layout_marginBottom="8dp">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/mean_of_transport"
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="1"/>
+            android:textSize="16sp"
+            android:fontFamily="sans-serif" />
 
         <Spinner
             android:id="@+id/spinner_transport"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="50dp"
-            android:layout_weight="1"/>
-
+            android:layout_weight="1" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="0dp">
+        android:layout_marginBottom="8dp">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/type_of_problem"
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="1"/>
+            android:textSize="16sp"
+            android:fontFamily="sans-serif" />
 
         <Spinner
             android:id="@+id/spinner_problem_type"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="50dp"
-            android:layout_weight="1"/>
-
+            android:layout_weight="1" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="0dp">
+        android:layout_marginBottom="8dp">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="0.6"
             android:text="@string/delay_duration"
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="0.4"/>
+            android:textSize="16sp"
+            android:fontFamily="sans-serif" />
 
         <EditText
             android:id="@+id/et_delay_duration"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1"
-            android:hint="@string/_30"/>
+            android:hint="@string/_30"
+            android:inputType="number" />
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="0dp">
+        android:layout_marginBottom="8dp">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/starting_city"
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="1"/>
-
+            android:textSize="16sp"
+            android:fontFamily="sans-serif" />
 
         <EditText
             android:id="@+id/startingCity"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1" />
-
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="0dp">
+        android:layout_marginBottom="8dp">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/destination_city"
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="1"/>
-
+            android:textSize="16sp"
+            android:fontFamily="sans-serif" />
 
         <EditText
             android:id="@+id/destinationCity"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1" />
-
     </LinearLayout>
-
 
     <EditText
         android:id="@+id/et_problem_details"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
         android:hint="@string/add_details_about_the_problem"
         android:inputType="textMultiLine"
-        android:minHeight="100dp" />
+        android:layout_marginBottom="16dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="start"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="16dp"
+        android:weightSum="2"
+        android:gravity="center_horizontal">
 
         <Button
             android:id="@+id/btn_set_start_location"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Kezdőpont beállítása" />
+            android:text="@string/edit_starting"
+            android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/btn_set_end_location"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Végpont beállítása"
-            android:layout_marginStart="8dp"/>
+            android:text="@string/edit_destination"
+            android:layout_marginStart="8dp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="end"
-        android:paddingTop="16dp">
+
+        android:layout_marginBottom="8dp"
+        android:paddingHorizontal="8dp">
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/img_like"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/like"
+                android:scaleType="centerInside"
+                android:onClick="likeReport"
+                android:contentDescription="@string/like" />
+
+            <TextView
+                android:id="@+id/tv_like_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                android:background="@drawable/like_count"
+                android:text="0"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:padding="4dp"
+                android:minWidth="24dp"
+                android:gravity="center"
+                android:elevation="4dp" />
+        </FrameLayout>
+
+        <Space
+            android:layout_width="16dp"
+            android:layout_height="wrap_content" />
 
         <Button
             android:id="@+id/btn_cancel"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/cancel"
-            />
+            android:layout_weight="1"
+            android:text="@string/cancel" />
 
         <Button
             android:id="@+id/btn_edit"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="edit"
-            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:text="@string/edit"
             />
+
         <Button
             android:id="@+id/btn_delete"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/delete"
-            android:layout_marginStart="16dp"
             />
     </LinearLayout>
+
 </LinearLayout>

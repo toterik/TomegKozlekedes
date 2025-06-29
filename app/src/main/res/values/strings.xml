@@ -1,62 +1,66 @@
 <resources>
-    <string name="app_name">Public Transport Report</string>
-    <string name="map">Map</string>
-    <string name="logout">Logout</string>
-    <string name="login">Login</string>
-    <string name="sort">Sort</string>
-    <string name="register">Registration</string>
-    <string name="cancel">Cancel</string>
-    <string name="password">Password</string>
-    <string name="email">Email</string>
-    <string name="delete">Delete</string>
-    <string name="password_again">Confirm Password</string>
-    <string name="resend_verification_email">Resend Verification Email</string>
-    <string name="forgot_password">Forgot Password?</string>
-    <string name="resend_password">Resend Password</string>
-    <string name="resend_email_text">Enter your email associated with your account to change your password</string>
-    <string name="find_your_account">Find Your account</string>
-    <string name="title_activity_maps">MapsActivity</string>
-    <string name="jelentesek">Reports</string>
-    <string name="full">Full</string>
-    <string name="replacement">Replacement</string>
-    <string name="other">Other</string>
-    <string name="late">Late</string>
-    <string name="substitute">Substitute</string>
-    <string name="report_details">Report Details</string>
-    <string name="add_details_about_the_problem">Add details about the problem</string>
-    <string name="mean_of_transport">Mean of Transport:</string>
-    <string name="destination">Destination:</string>
-    <string name="send">Send</string>
-    <string name="type_of_problem">Type of problem:</string>
+    <string name="app_name">Tömegközlekedési Jelentés</string>
+    <string name="map">Térkép</string>
+    <string name="logout">Kijelentkezés</string>
+    <string name="login">Bejelentkezés</string>
+    <string name="sort">Rendezés</string>
+    <string name="register">Regisztráció</string>
+    <string name="cancel">Mégse</string>
+    <string name="password">Jelszó</string>
+    <string name="email">E-mail</string>
+    <string name="delete">Törlés</string>
+    <string name="password_again">Jelszó megerősítése</string>
+    <string name="resend_verification_email">Megerősítő e-mail újraküldése</string>
+    <string name="forgot_password">Elfelejtetted a jelszavad?</string>
+    <string name="resend_password">Jelszó újraküldése</string>
+    <string name="resend_email_text">Add meg az e-mail címed, amely a fiókoddal van társítva a jelszó megváltoztatásához</string>
+    <string name="find_your_account">Fiók keresése</string>
+    <string name="title_activity_maps">TérképAktivitás</string>
+    <string name="jelentesek">Jelentések</string>
+    <string name="full">Teli</string>
+    <string name="replacement">Helyettesítő járat</string>
+    <string name="other">Egyéb</string>
+    <string name="late">Késés</string>
+    <string name="substitute">Helyettesítés</string>
+    <string name="report_details">Jelentés részletei</string>
+    <string name="add_details_about_the_problem">Adj meg részleteket a problémáról</string>
+    <string name="mean_of_transport">Közlekedési eszköz:</string>
+    <string name="destination">Úti cél:</string>
+    <string name="send">Küldés</string>
+    <string name="type_of_problem">Probléma típusa:</string>
     <string name="budapest">Budapest</string>
-    <string name="delay_duration">Expected delay duration (min):</string>
+    <string name="delay_duration">Várható késés időtartama (perc):</string>
     <string name="_30">30</string>
-    <string name="details">Details</string>
-    <string name="destination_city">Destination City:</string>
-    <string name="starting_city">Starting City:</string>
-    <string name="search_for_city">Search for city:</string>
+    <string name="details">Részletek</string>
+    <string name="destination_city">Célváros:</string>
+    <string name="starting_city">Induló város:</string>
+    <string name="search_for_city">Város keresése:</string>
+    <string name="edit">Módosítás</string>
+    <string name="edit_destination">Végpont beállítása</string>
+    <string name="edit_starting">Kezdőpont beállítása</string>
+    <string name="like">Like</string>
 
     <string-array name="means_of_transport">
-        <item>Bus</item>
-        <item>Train</item>
-        <item>Trolley</item>
-        <item>Tram</item>
-        <item>Airplane</item>
+        <item>Busz</item>
+        <item>Vonat</item>
+        <item>Troli</item>
+        <item>Villamos</item>
+        <item>Repülő</item>
     </string-array>
+
     <string-array name="type_of_problem">
-        <item>Late</item>
-        <item>Full</item>
-        <item>Replacement</item>
-        <item>Other</item>
+        <item>Késés</item>
+        <item>Teli</item>
+        <item>Helyettesítő járat</item>
+        <item>Egyéb</item>
     </string-array>
+
     <string-array name="filter_means_of_transport">
-        <item>All</item>
-        <item>Bus</item>
-        <item>Train</item>
-        <item>Trolley</item>
-        <item>Tram</item>
-        <item>Airplane</item>
+        <item>Összes</item>
+        <item>Busz</item>
+        <item>Vonat</item>
+        <item>Troli</item>
+        <item>Villamos</item>
+        <item>Repülő</item>
     </string-array>
-
-
 </resources>

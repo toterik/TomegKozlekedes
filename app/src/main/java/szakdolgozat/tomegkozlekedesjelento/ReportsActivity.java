@@ -125,6 +125,7 @@ public class ReportsActivity extends MenuForAllActivity
         }
         Geocoder geocoder = new Geocoder(this);
         String city = et_CityFilter.getText().toString().toLowerCase().trim();
+        String cityFilter = et_CityFilter.getText().toString().toLowerCase().trim();
 
         db.collection("reports")
                 .get()
@@ -135,15 +136,17 @@ public class ReportsActivity extends MenuForAllActivity
                     {
                         Report currentReport = document.toObject(Report.class);
 
-                        // Check city filter
-                        boolean matchesCity = Objects.equals(
-                                currentReport.getCity(geocoder, currentReport.getStartingLatitude(), currentReport.getStartingLongitude()).toLowerCase(), city
-                        ) || Objects.equals(
-                                currentReport.getCity(geocoder, currentReport.getDestinationLatitude(), currentReport.getDestinationLongitude()).toLowerCase(), city
-                        );
+                        String startingCity = currentReport.getCity(geocoder, currentReport.getStartingLatitude(), currentReport.getStartingLongitude()).toLowerCase();
+                        String destinationCity = currentReport.getCity(geocoder, currentReport.getDestinationLatitude(), currentReport.getDestinationLongitude()).toLowerCase();
+
+                        // Check city filter with partial match
+                        boolean matchesCity = cityFilter.isEmpty() ||
+                                startingCity.contains(cityFilter) ||
+                                destinationCity.contains(cityFilter);
+
 
                         // Check transport filter
-                        boolean matchesTransport = spinnerSelectedItem.equals("All") ||
+                        boolean matchesTransport = spinnerSelectedItem.equals("Összes") ||
                                 currentReport.getMeanOfTransport().equalsIgnoreCase(spinnerSelectedItem);
 
                         // Add to list if it matches both filters

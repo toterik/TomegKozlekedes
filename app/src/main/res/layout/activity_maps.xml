@@ -19,33 +19,71 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <ImageView
-        android:id="@+id/img_report"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_gravity="bottom|start"
-        android:layout_marginStart="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="20dp"
-        android:onClick="startProblemReport"
-        android:src="@drawable/report_img" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical|center_horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
-    <ImageView
-        android:id="@+id/img_ok"
-        android:layout_width="55dp"
-        android:layout_height="55dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="50dp"
-        android:layout_marginBottom="25dp"
-        android:src="@drawable/ok_icon" />
+        <ImageView
+            android:id="@+id/img_report"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:onClick="startProblemReport"
+            android:src="@drawable/report_img" />
 
-    <ImageView
-        android:id="@+id/img_no"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="120dp"
-        android:layout_marginBottom="20dp"
-        android:src="@drawable/no_icon" />
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <FrameLayout
+            android:layout_width="70dp"
+            android:layout_height="70dp">
+
+            <ImageView
+                android:id="@+id/img_cancel"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:src="@drawable/no_icon" />
+
+            <ImageView
+                android:id="@+id/img_cancel_editing"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:src="@drawable/no_icon" />
+
+        </FrameLayout>
+
+        <Space
+            android:layout_width="16dp"
+            android:layout_height="wrap_content" />
+
+        <FrameLayout
+            android:layout_width="70dp"
+            android:layout_height="70dp">
+
+            <ImageView
+                android:id="@+id/img_ok"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ok_icon" />
+
+            <ImageView
+                android:id="@+id/img_ok_editing"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ok_icon" />
+
+        </FrameLayout>
+
+    </LinearLayout>
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
