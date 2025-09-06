@@ -35,6 +35,12 @@
             android:layout_height="80dp"
             android:onClick="startProblemReport"
             android:src="@drawable/report_img" />
+        <ImageView
+            android:id="@+id/img_car"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:onClick="openCarReportSheetDialog"
+            android:src="@drawable/car"/>
 
         <Space
             android:layout_width="0dp"

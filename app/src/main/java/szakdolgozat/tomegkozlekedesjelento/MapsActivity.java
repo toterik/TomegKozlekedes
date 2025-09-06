@@ -10,7 +10,6 @@ import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.icu.text.Transliterator;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -72,6 +71,7 @@ import java.util.Map;
 import java.util.Set;
 
 
+import szakdolgozat.tomegkozlekedesjelento.Model.CarReport;
 import szakdolgozat.tomegkozlekedesjelento.Model.MarkerPair;
 import szakdolgozat.tomegkozlekedesjelento.Model.Report;
 import szakdolgozat.tomegkozlekedesjelento.databinding.ActivityMapsBinding;
@@ -88,7 +88,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private FirebaseFirestore db;
     private AutocompleteSupportFragment autocompleteSupportFragment;
     private ArrayList<Marker> markersList = new ArrayList<>();
-    private ArrayList<Report> reportsList = new ArrayList<>();
     private Marker startingMarker;
     private Marker destinationMarker;
     private boolean userIsLoggedIn = false;
@@ -218,14 +217,71 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         mMap.setOnMarkerClickListener(marker ->
         {
             selectedMarker = marker;
-            markersList.add(selectedMarker);
-            Report report = (Report) marker.getTag();
-            if (report != null)
+            if (marker.getTag().getClass() == Report.class)
             {
-                openEditingBottomSheetDialog();
+                Report report = (Report) marker.getTag();
+                if (report != null)
+                {
+                    openEditingBottomSheetDialog();
+                }
+            }
+            else
+            {
+                CarReport carReport = (CarReport) marker.getTag();
+                if (carReport != null)
+                {
+                    openCarReportDetailsBottomSheet(carReport);
+                }
             }
             return true;
         });
+    }
+    private void openCarReportDetailsBottomSheet(CarReport carReport) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_carreport_details, null);
+        bottomSheetDialog.setContentView(sheetView);
+
+        TextView tvDriver = sheetView.findViewById(R.id.tv_driver);
+        TextView tvFromTo = sheetView.findViewById(R.id.tv_from_to);
+        TextView tvSeats = sheetView.findViewById(R.id.tv_seats);
+        TextView tvComment = sheetView.findViewById(R.id.tv_comment);
+        Button btnJoin = sheetView.findViewById(R.id.btn_join);
+
+        // Sofőr email vagy UID
+        tvDriver.setText("Sofőr: " + carReport.getUid());
+        tvFromTo.setText(carReport.getFromCity() + " → " + carReport.getToCity());
+
+        int freeSeats = carReport.getSeatsAvailable() - carReport.getAccepted().size();
+        tvSeats.setText("Szabad helyek: " + freeSeats);
+        tvComment.setText("Megjegyzés: " + (carReport.getComment().isEmpty() ? "nincs" : carReport.getComment()));
+
+        if (freeSeats <= 0) {
+            btnJoin.setEnabled(false);
+            btnJoin.setText("Már betelt");
+        }
+
+        btnJoin.setOnClickListener(v -> {
+            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+            // Ha már jelentkezett, ne engedjük újra
+            if (carReport.getApplicants().contains(userId) || carReport.getAccepted().contains(userId)) {
+                Toast.makeText(this, "Már jelentkeztél erre az útra!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            db.collection("carReports")
+                    .document(carReport.getDocumentId())
+                    .update("applicants", FieldValue.arrayUnion(userId))
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Jelentkezés elküldve!", Toast.LENGTH_SHORT).show();
+                        bottomSheetDialog.dismiss();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Hiba: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        });
+
+        bottomSheetDialog.show();
     }
 
     private void liveMarkerTracker()
@@ -356,7 +412,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             for (QueryDocumentSnapshot document : queryDocumentSnapshots)
             {
                 Report currentReport = document.toObject(Report.class);
-                reportsList.add(currentReport);
 
                 addMarkersFromReport(currentReport);
             }
@@ -364,7 +419,65 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         {
             Log.e("Marker_Fail", "Error fetching markers", e);
         });
+
+        var carReports = db.collection("carReports");
+        carReports.get().addOnSuccessListener(queryDocumentSnapshots ->
+        {
+            for (QueryDocumentSnapshot document : queryDocumentSnapshots)
+            {
+                CarReport currentCarReport = document.toObject(CarReport.class);
+                currentCarReport.setDocumentId(document.getId());
+                addMarkersFromCarReport(currentCarReport);
+            }
+        }).addOnFailureListener(e ->
+        {
+            Log.e("Marker_Fail", "Error fetching markers", e);
+        });
+
+
     }
+
+    private void addMarkersFromCarReport(CarReport currentCarReport)
+    {
+        LatLng startLatLng = new LatLng(currentCarReport.getStartingLatitude(), currentCarReport.getStartingLongitude());
+        LatLng endLatLng = new LatLng(currentCarReport.getDestinationLatitude(), currentCarReport.getDestinationLongitude());
+
+        int resourceId = getResources().getIdentifier("car", "drawable", getPackageName());
+        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), resourceId);
+
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, 100, 100, false);
+
+        BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resizedBitmap);
+
+        Marker startMarker = null;
+        if (!markerExists(startLatLng))
+        {
+            startMarker = mMap.addMarker(new MarkerOptions()
+                    .position(startLatLng)
+                    .icon(icon));
+        }
+
+        Marker endMarker = null;
+        if (!markerExists(endLatLng))
+        {
+            endMarker = mMap.addMarker(new MarkerOptions()
+                    .position(endLatLng)
+                    .icon(icon));
+        }
+
+        if (startMarker != null && endMarker != null)
+        {
+            startMarker.setTag(currentCarReport);
+            endMarker.setTag(currentCarReport);
+
+            /*
+            markersList.add(startMarker);
+            markersList.add(endMarker);
+            markerPairs.add(new MarkerPair(startMarker, endMarker));
+             */
+        }
+    }
+
     private boolean markerExists(LatLng position) {
         for (Marker m : markersList) {
             if (m.getPosition().equals(position)) {
@@ -673,7 +786,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(candidate, 20));
 
-                removeAutoFragment();
+                //removeAutoFragment();
             }
         });
     }
@@ -1030,5 +1143,166 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 .addOnFailureListener(e -> {
                     Log.e("LikeCount", "Hiba a lájkok lekérésekor: ", e);
                 });
+    }
+
+    public void openCarReportSheetDialog(View view)
+    {
+
+        if (startingMarker == null) {
+            LatLng candidate = userCurrentLocation;
+            startingMarker = mMap.addMarker(new MarkerOptions()
+                    .position(candidate)
+                    .draggable(true)
+                    .title("Indulás"));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(startingMarker.getPosition(), 20));
+        }
+
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_carpool_form, null);
+        bottomSheetDialog.setContentView(sheetView);
+        bottomSheetDialog.setCanceledOnTouchOutside(false);
+        EditText fromCityEt = sheetView.findViewById(R.id.et_from_city);
+        EditText seatsEt = sheetView.findViewById(R.id.et_seats);
+        EditText commentEt = sheetView.findViewById(R.id.et_comment);
+        String toCity;
+
+        setupAutoCompleteFragment(bottomSheetDialog);
+
+        cancelIMG.setOnClickListener(v ->
+        {
+            okIMG.setVisibility(View.INVISIBLE);
+            cancelIMG.setVisibility(View.INVISIBLE);
+            if (startingMarker != null)
+            {
+                startingMarker.remove();
+                startingMarker = null;
+            }
+            if (destinationMarker != null)
+            {
+                destinationMarker.remove();
+                destinationMarker = null;
+            }
+        });
+
+
+        okIMG.setOnClickListener(v -> {
+            bottomSheetDialog.setContentView(sheetView);
+            bottomSheetDialog.setCanceledOnTouchOutside(false);
+            bottomSheetDialog.setDismissWithAnimation(false);
+            if (startingMarker == null) return;
+            if (destinationMarker != null)
+            {
+                Geocoder geocoder = new Geocoder(this.getApplicationContext(), Locale.getDefault());
+                try
+                {
+                    List<Address> addresses = geocoder.getFromLocation(destinationMarker.getPosition().latitude, destinationMarker.getPosition().longitude, 1);
+                    if (addresses != null && !addresses.isEmpty())
+                    {
+                        String city = addresses.get(0).getLocality();
+                        autocompleteSupportFragment.setText(city);
+                    } else
+                    {
+                        autocompleteSupportFragment.setText("Destination not found");
+                    }
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                    autocompleteSupportFragment.setText("Error getting destination");
+                }
+            }
+            bottomSheetDialog.show();
+            okIMG.setVisibility(View.INVISIBLE);
+            cancelIMG.setVisibility(View.INVISIBLE);
+        });
+
+
+        if (startingMarker != null)
+        {
+            List<Address> Address = null;
+            try {
+                Address = geocoder.getFromLocation(startingMarker.getPosition().latitude, startingMarker.getPosition().longitude, 1);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            fromCityEt.setText(Address.get(0).getLocality());
+        }
+        if (destinationMarker != null)
+        {
+            List<Address> Address = null;
+            try {
+                Address = geocoder.getFromLocation(destinationMarker.getPosition().latitude, destinationMarker.getPosition().longitude, 1);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            toCity = (Address.get(0).getLocality());
+        } else
+        {
+            toCity = "";
+        }
+
+
+        Button cancelButton = sheetView.findViewById(R.id.btn_cancel);
+        Button submitButton = sheetView.findViewById(R.id.btn_submit);
+
+        cancelButton.setOnClickListener(v -> {
+            if (startingMarker != null) {
+                startingMarker.remove();
+                startingMarker = null;
+            }
+            if (destinationMarker != null) {
+                destinationMarker.remove();
+                destinationMarker = null;
+            }
+            bottomSheetDialog.dismiss();
+            removeAutoFragment();
+        });
+
+        submitButton.setOnClickListener(v -> {
+            if (destinationMarker == null) {
+                Toast.makeText(this, "Kérlek add meg a célpontot!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String fromCity = fromCityEt.getText().toString();
+            String seatsText = seatsEt.getText().toString();
+            String comment = commentEt.getText().toString();
+
+            if (fromCity.isEmpty() || seatsText.isEmpty()) {
+                Toast.makeText(this, "Minden mező kitöltése kötelező!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int seats = Integer.parseInt(seatsText);
+
+            CarReport carReport = new CarReport(
+                    FirebaseAuth.getInstance().getCurrentUser().getUid(),
+                    startingMarker.getPosition().latitude,
+                    startingMarker.getPosition().longitude,
+                    destinationMarker.getPosition().latitude,
+                    destinationMarker.getPosition().longitude,
+                    fromCity,
+                    toCity,
+                    seats,
+                    comment
+            );
+
+            db.collection("carReports").add(carReport)
+                    .addOnSuccessListener(doc -> {
+                        carReport.setDocumentId(doc.getId());
+                        Toast.makeText(this, "Utazás sikeresen meghirdetve!", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Hiba történt: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+
+            startingMarker.remove();
+            destinationMarker.remove();
+            startingMarker = null;
+            destinationMarker = null;
+            bottomSheetDialog.dismiss();
+            removeAutoFragment();
+        });
+
+        bottomSheetDialog.show();
     }
 }
