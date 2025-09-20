@@ -6,6 +6,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.google.firebase.firestore.DocumentId;
+import com.google.firebase.firestore.Exclude;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.PropertyName;
 
@@ -83,12 +85,14 @@ public class Report implements Serializable
     public int getDelay() {
         return delay;
     }
-
+    @Exclude
+    @DocumentId
     public String getDocumentId()
     {
         return documentId;
     }
-
+    @Exclude
+    @DocumentId
     public void setDocumentId(String documentId)
     {
         this.documentId = documentId;

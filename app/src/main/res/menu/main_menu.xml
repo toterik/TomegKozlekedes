@@ -10,6 +10,10 @@
         android:title="@string/jelentesek">
     </item>
     <item
+        android:id="@+id/car_reports_item"
+        android:title="@string/utaz_saim">
+    </item>
+    <item
         android:id="@+id/registration_item"
         android:title="@string/register">
     </item>

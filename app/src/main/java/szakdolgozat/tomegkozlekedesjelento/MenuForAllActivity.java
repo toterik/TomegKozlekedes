@@ -30,10 +30,12 @@ public class MenuForAllActivity extends AppCompatActivity
         else
         {
             //If the user is not logged in, the login item is visible
-            MenuItem item = menu.findItem(R.id.login_item);
-            item.setVisible(true);
-            MenuItem items = menu.findItem(R.id.logout_item);
-            items.setVisible(false);
+            MenuItem loginItem = menu.findItem(R.id.login_item);
+            loginItem.setVisible(true);
+            MenuItem logOutitem = menu.findItem(R.id.logout_item);
+            logOutitem.setVisible(false);
+            MenuItem carReportItems = menu.findItem(R.id.car_reports_item);
+            carReportItems.setVisible(false);
         }
 
         return true;
@@ -56,12 +58,19 @@ public class MenuForAllActivity extends AppCompatActivity
             Intent intent = new Intent(this, ReportsActivity.class);
             startActivity(intent);
         }
+        else if (id == R.id.car_reports_item)
+        {
+            //The Report item is selected, the Report activity opens
+            Intent intent = new Intent(this, CarReportsActivity.class);
+            startActivity(intent);
+        }
         else if(id == R.id.logout_item)
         {
             //The Logout item is selected, the user is logged out and the activity refreshes
             FirebaseAuth.getInstance().signOut();
             finish();
-            startActivity(getIntent());
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
             return true;
         }
         else if(id == R.id.login_item)

@@ -39,6 +39,7 @@
     <string name="edit_destination">Végpont beállítása</string>
     <string name="edit_starting">Kezdőpont beállítása</string>
     <string name="like">Like</string>
+    <string name="utaz_saim">Utazásaim</string>
 
     <string-array name="means_of_transport">
         <item>Busz</item>

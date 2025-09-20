@@ -43,4 +43,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Jelentkezem erre az útra" />
+    <Button
+        android:id="@+id/btn_endCarReport"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Vége az útnak" />
 </LinearLayout>

@@ -39,6 +39,9 @@
             android:name=".RegistrationActivity"
             android:exported="false" />
         <activity
+            android:name=".CarReportsActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
