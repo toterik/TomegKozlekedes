@@ -1,36 +1,49 @@
-<?xml version="1.0" encoding="utf-8"?><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@android:color/white">
 
+    <!-- Jelentkező neve / email -->
     <TextView
         android:id="@+id/tv_applicant_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Email"
         android:textSize="18sp"
-        android:paddingBottom="8dp"/>
+        android:paddingBottom="8dp"
+        android:textColor="@android:color/black"
+        android:textStyle="bold" />
 
+    <!-- Elfogadás / Elutasítás gombok -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_horizontal"
-        android:paddingTop="8dp">
+        android:paddingTop="12dp"
+        android:weightSum="2">
 
         <Button
             android:id="@+id/btn_accept"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Elfogad"/>
+            android:layout_weight="1"
+            android:text="Elfogad"
+            android:backgroundTint="#ADD8E6"
+            android:textColor="@android:color/black"
+            android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/btn_reject"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Elutasít"/>
+            android:layout_weight="1"
+            android:text="Elutasít"
+            android:backgroundTint="#F08080"
+            android:textColor="@android:color/black"
+            android:layout_marginStart="8dp" />
     </LinearLayout>
 </LinearLayout>

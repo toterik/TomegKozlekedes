@@ -9,15 +9,15 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Közlekedési eszköz sor -->
+        <!-- Közlekedési eszköz -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:layout_marginTop="8dp">
 
             <TextView
+                android:id="@+id/label_transport"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -33,15 +33,15 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <!-- Probléma típusa sor -->
+        <!-- Probléma típusa -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:layout_marginTop="12dp">
 
             <TextView
+                android:id="@+id/label_problem_type"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -57,15 +57,15 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <!-- Induló város sor -->
+        <!-- Induló város -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:layout_marginTop="12dp">
 
             <TextView
+                android:id="@+id/label_starting_city"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -81,15 +81,15 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <!-- Célállomás sor -->
+        <!-- Célállomás -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:layout_marginTop="12dp">
 
             <TextView
+                android:id="@+id/label_destination"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -105,15 +105,15 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <!-- Késés időtartama sor -->
+        <!-- Késés időtartama -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:layout_marginTop="12dp">
 
             <TextView
+                android:id="@+id/label_delay_duration"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -129,15 +129,15 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <!-- Probléma leírása sor -->
+        <!-- Probléma leírása -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:layout_marginTop="12dp">
 
             <TextView
+                android:id="@+id/label_problem_details"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -153,13 +153,15 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <!-- Kilépés gomb -->
+        <!-- Bezárás gomb -->
         <Button
             android:id="@+id/btn_cancel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Bezárás"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="20dp"
+            android:backgroundTint="#F08080"
+            android:textColor="@android:color/black" />
 
     </LinearLayout>
 </ScrollView>

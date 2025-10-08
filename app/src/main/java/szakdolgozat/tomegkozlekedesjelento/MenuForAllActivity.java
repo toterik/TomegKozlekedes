@@ -69,7 +69,7 @@ public class MenuForAllActivity extends AppCompatActivity
             //The Logout item is selected, the user is logged out and the activity refreshes
             FirebaseAuth.getInstance().signOut();
             finish();
-            Intent intent = new Intent(this, MainActivity.class);
+            Intent intent = new Intent(this, MapsActivity.class);
             startActivity(intent);
             return true;
         }
@@ -84,6 +84,13 @@ public class MenuForAllActivity extends AppCompatActivity
         {
             //The Registration item is selected, the Registration activity opens
             Intent intent = new Intent(this, RegistrationActivity.class);
+            startActivity(intent);
+            return true;
+        }
+        else if(id == R.id.leaderboard)
+        {
+            //The leaderboard item is selected, the leaderboard activity opens
+            Intent intent = new Intent(this, LeaderboardActivity.class);
             startActivity(intent);
             return true;
         }

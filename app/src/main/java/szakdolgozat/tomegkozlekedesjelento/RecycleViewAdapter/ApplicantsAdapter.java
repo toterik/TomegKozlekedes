@@ -1,11 +1,13 @@
 package szakdolgozat.tomegkozlekedesjelento.RecycleViewAdapter;
 
 import android.content.Context;
+import android.location.Geocoder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.content.Intent;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,6 +17,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.List;
 
+import szakdolgozat.tomegkozlekedesjelento.MapsActivity;
 import szakdolgozat.tomegkozlekedesjelento.Model.Applicant;
 import szakdolgozat.tomegkozlekedesjelento.Model.CarReport;
 import szakdolgozat.tomegkozlekedesjelento.R;
@@ -49,7 +52,7 @@ public class ApplicantsAdapter extends RecyclerView.Adapter<ApplicantsAdapter.Vi
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
-                        holder.applicantName.setText(doc.getString("email"));
+                        holder.applicantName.setText(doc.getString("username"));
                     } else {
                         holder.applicantName.setText("Ismeretlen");
                     }
@@ -78,7 +81,15 @@ public class ApplicantsAdapter extends RecyclerView.Adapter<ApplicantsAdapter.Vi
                         notifyItemRemoved(holder.getAdapterPosition());
                     });
         });
-
+        TextView tvApplicantFrom = holder.itemView.findViewById(R.id.tv_applicant_from);
+        Geocoder geocoder = new Geocoder(context);
+        String city = "Ismeretlen";
+        try {
+            city = applicant.getAddress(geocoder);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        tvApplicantFrom.setText(city);
     }
 
     @Override

@@ -1,42 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-xmlns:android="http://schemas.android.com/apk/res/android"
-android:layout_width="match_parent"
-android:layout_height="wrap_content"
-android:orientation="vertical"
-android:padding="16dp">
-
-<TextView
-    android:id="@+id/tv_location_title"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:text="Autó megosztás"
-    android:textSize="18sp"
-    android:fontFamily="sans-serif-medium"
-    android:paddingBottom="8dp" />
-
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dp">
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <TextView
+        android:id="@+id/tv_location_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Indulási hely:"
+        android:text="Autó megosztás"
         android:textSize="18sp"
         android:fontFamily="sans-serif-medium"
-        android:paddingBottom="8dp"
-        android:layout_weight="1"/>
-
-    <EditText
-        android:id="@+id/et_from_city"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_weight="1" />
-
-</LinearLayout>
+        android:paddingBottom="8dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -45,64 +21,90 @@ android:padding="16dp">
         android:padding="8dp">
 
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="@string/destination"
-
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="1"/>
-
-
-        <fragment android:id="@+id/autocomplete_fragment_car_report"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
-            android:layout_weight="0.6" />
+            android:layout_weight="1"
+            android:text="Indulási hely:"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center_vertical" />
 
+        <EditText
+            android:id="@+id/et_from_city"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
     </LinearLayout>
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dp">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Férőhelyek száma"
-        android:textSize="18sp"
-        android:fontFamily="sans-serif-medium"
-        android:layout_weight="1"/>
+        android:orientation="horizontal"
+        android:padding="8dp">
 
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Célállomás:"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center_vertical" />
+
+        <fragment
+            android:id="@+id/autocomplete_fragment_car_report"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Férőhelyek száma:"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center_vertical" />
+
+        <EditText
+            android:id="@+id/et_seats"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:inputType="number" />
+    </LinearLayout>
 
     <EditText
-        android:id="@+id/et_seats"
+        android:id="@+id/et_comment"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_weight="1"
-        android:inputType="number" />
-
-</LinearLayout>
-<EditText
-    android:id="@+id/et_comment"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:hint="Megjegyzés"
-    android:inputType="textMultiLine"
-    android:minHeight="100dp" />
-
+        android:layout_height="100dp"
+        android:hint="Megjegyzés"
+        android:inputType="textMultiLine"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp" />
 
     <Button
         android:id="@+id/btn_submit"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Meghirdetem" />
+        android:text="Meghirdetem"
+        android:backgroundTint="#ADD8E6"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="8dp" />
 
     <Button
         android:id="@+id/btn_cancel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Mégse" />
+        android:text="Mégse"
+        android:backgroundTint="#F08080"
+        android:textColor="@android:color/black" />
 </LinearLayout>

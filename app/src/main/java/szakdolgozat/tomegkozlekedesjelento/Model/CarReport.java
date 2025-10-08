@@ -22,8 +22,6 @@ public class CarReport {
     private String comment;
     private Date startingDate;
     private boolean active;
-
-    @Exclude
     private String documentId;
 
     public CarReport() {}
@@ -171,9 +169,6 @@ public class CarReport {
         this.accepted = accepted;
     }
 
-    @DocumentId
     public String getDocumentId() { return documentId; }
-
-    @DocumentId
     public void setDocumentId(String documentId) { this.documentId = documentId; }
 }

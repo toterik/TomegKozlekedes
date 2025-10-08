@@ -1,143 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
-
-    <TextView
-        android:id="@+id/tv_location_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/report_details"
-        android:textSize="18sp"
-        android:fontFamily="sans-serif-medium"
-        android:paddingBottom="8dp" />
+    android:padding="16dp"
+    android:background="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="0dp">
+        android:orientation="vertical">
 
+        <!-- Cím -->
         <TextView
+            android:id="@+id/tv_location_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/mean_of_transport"
+            android:text="@string/report_details"
             android:textSize="18sp"
+            android:textColor="@android:color/black"
             android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="1"/>
+            android:paddingBottom="8dp" />
 
-        <Spinner
-            android:id="@+id/spinner_transport"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_weight="1"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="0dp">
-
-        <TextView
+        <!-- Közlekedési eszköz -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/type_of_problem"
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="1"/>
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
 
-        <Spinner
-            android:id="@+id/spinner_problem_type"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_weight="1"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/mean_of_transport"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:fontFamily="sans-serif-medium"
+                android:paddingBottom="8dp"/>
 
-    </LinearLayout>
+            <Spinner
+                android:id="@+id/spinner_transport"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"/>
+        </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="0dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/destination"
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="1"/>
-
-
-        <fragment android:id="@+id/autocomplete_fragment"
+        <!-- Probléma típusa -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
-            android:layout_weight="0.6" />
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
 
-    </LinearLayout>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/type_of_problem"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:fontFamily="sans-serif-medium"
+                android:paddingBottom="8dp"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="0dp">
+            <Spinner
+                android:id="@+id/spinner_problem_type"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"/>
+        </LinearLayout>
 
-        <TextView
+        <!-- Célállomás -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/delay_duration"
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="0.4"/>
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
 
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.4"
+                android:text="@string/destination"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:fontFamily="sans-serif-medium"
+                android:paddingBottom="8dp"/>
 
+            <fragment
+                android:id="@+id/autocomplete_fragment"
+                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.6" />
+        </LinearLayout>
+
+        <!-- Késés időtartama -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="0.6"
+                android:text="@string/delay_duration"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:fontFamily="sans-serif-medium"
+                android:paddingBottom="8dp"/>
+
+            <EditText
+                android:id="@+id/et_delay_duration"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:hint="@string/_30"
+                android:inputType="number"/>
+        </LinearLayout>
+
+        <!-- Probléma részletei -->
         <EditText
-            android:id="@+id/et_delay_duration"
+            android:id="@+id/et_problem_details"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:hint="@string/_30"/>
+            android:layout_height="wrap_content"
+            android:hint="@string/add_details_about_the_problem"
+            android:inputType="textMultiLine"
+            android:minHeight="100dp"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Gombok -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:paddingTop="16dp">
+
+            <Button
+                android:id="@+id/btn_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cancel"
+                android:backgroundTint="#F08080"
+                android:textColor="@android:color/black"/>
+
+            <Button
+                android:id="@+id/btn_submit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/send"
+                android:layout_marginStart="16dp"
+                android:onClick="sendReport"
+                android:backgroundTint="#ADD8E6"
+                android:textColor="@android:color/black"/>
+        </LinearLayout>
 
     </LinearLayout>
-
-
-    <EditText
-        android:id="@+id/et_problem_details"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/add_details_about_the_problem"
-        android:inputType="textMultiLine"
-        android:minHeight="100dp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end"
-        android:paddingTop="16dp">
-
-        <Button
-            android:id="@+id/btn_cancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cancel" />
-
-        <Button
-            android:id="@+id/btn_submit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/send"
-            android:layout_marginStart="16dp"
-            android:onClick="sendReport"/>
-    </LinearLayout>
-</LinearLayout>
+</ScrollView>

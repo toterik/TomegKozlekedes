@@ -25,6 +25,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -37,6 +38,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.TypeFilter;
@@ -83,6 +86,8 @@ import szakdolgozat.tomegkozlekedesjelento.databinding.ActivityMapsBinding;
 public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallback
 {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final int POINTS_FOR_CAR_REPORT_PER_USER = 5;
+    private static final int POINTS_FOR_REPORT_PER_LIKE = 1;
     private Marker selectedMarker;
     private static final double TOLERANCE = 0.00005;
     Set<MarkerPair> markerPairs = new HashSet<>();
@@ -225,35 +230,38 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         mMap.setOnMarkerClickListener(marker ->
         {
             selectedMarker = marker;
-            if (marker.getTag().getClass() == Report.class)
+            if(marker.getTag() != null)
             {
-                Report report = (Report) marker.getTag();
-                if (report != null)
+                if (marker.getTag().getClass() == Report.class)
                 {
-                    openEditingBottomSheetDialog();
-                }
-            }
-            else if (marker.getTag().getClass() == CarReport.class)
-            {
-                CarReport carReport = (CarReport) marker.getTag();
-                if (carReport != null)
+                    Report report = (Report) marker.getTag();
+                    if (report != null)
+                    {
+                        openEditingBottomSheetDialog();
+                    }
+                } else if (marker.getTag().getClass() == CarReport.class)
                 {
-                    openCarReportDetailsBottomSheet(carReport);
-                }
-            }
-            else if(marker.getTag().getClass() == ApplicantMarkerInfo.class)
-            {
-                ApplicantMarkerInfo applicantMarkerInfo = (ApplicantMarkerInfo) marker.getTag();
-                if(applicantMarkerInfo != null)
+                    CarReport carReport = (CarReport) marker.getTag();
+                    if (carReport != null)
+                    {
+                        openCarReportDetailsBottomSheet(carReport);
+                    }
+                } else if (marker.getTag().getClass() == ApplicantMarkerInfo.class)
                 {
-                    openApplicantBottomSheet(applicantMarkerInfo.getApplicant(),applicantMarkerInfo.getCarReport() );
+                    ApplicantMarkerInfo applicantMarkerInfo = (ApplicantMarkerInfo) marker.getTag();
+                    if (applicantMarkerInfo != null)
+                    {
+                        openApplicantBottomSheet(applicantMarkerInfo.getApplicant(), applicantMarkerInfo.getCarReport());
+                    }
                 }
+                return true;
             }
-            return true;
+            return false;
         });
     }
 
-    private void openApplicantBottomSheet(Applicant applicant, CarReport carReport) {
+    public void openApplicantBottomSheet(Applicant applicant, CarReport carReport)
+    {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         View sheetView = getLayoutInflater().inflate(R.layout.layout_bottomsheet_applicant, null);
         bottomSheetDialog.setContentView(sheetView);
@@ -266,25 +274,30 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         FirebaseFirestore.getInstance().collection("Users")
                 .document(applicant.getUid())
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String email = documentSnapshot.getString("email");
+                .addOnSuccessListener(documentSnapshot ->
+                {
+                    if (documentSnapshot.exists())
+                    {
+                        String email = documentSnapshot.getString("username");
                         tvName.setText(email);
-                    } else {
+                    } else
+                    {
                         tvName.setText("Ismeretlen felhasználó");
                     }
                 });
 
         bottomSheetDialog.show();
         // Elfogadás gomb
-        btnAccept.setOnClickListener(v -> {
+        btnAccept.setOnClickListener(v ->
+        {
             FirebaseFirestore.getInstance().collection("carReports")
                     .document(carReport.getDocumentId())
                     .update(
                             "accepted", FieldValue.arrayUnion(applicant.getUid()),
                             "applicants", FieldValue.arrayRemove(applicant)
                     )
-                    .addOnSuccessListener(unused -> {
+                    .addOnSuccessListener(unused ->
+                    {
                         Toast.makeText(this, "Elfogadva!", Toast.LENGTH_SHORT).show();
                         removeApplicantMarkerLive(applicant);
                         bottomSheetDialog.dismiss();
@@ -292,11 +305,13 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         });
 
         // Elutasítás gomb
-        btnReject.setOnClickListener(v -> {
+        btnReject.setOnClickListener(v ->
+        {
             FirebaseFirestore.getInstance().collection("carReports")
                     .document(carReport.getDocumentId())
                     .update("applicants", FieldValue.arrayRemove(applicant))
-                    .addOnSuccessListener(unused -> {
+                    .addOnSuccessListener(unused ->
+                    {
                         carReport.getApplicants().remove(applicant);
                         Toast.makeText(this, "Elutasítva!", Toast.LENGTH_SHORT).show();
                         bottomSheetDialog.dismiss();
@@ -306,7 +321,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
     }
 
-    private void openCarReportDetailsBottomSheet(CarReport carReport) {
+    private void openCarReportDetailsBottomSheet(CarReport carReport)
+    {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_carreport_details, null);
         bottomSheetDialog.setContentView(sheetView);
@@ -318,41 +334,65 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         Button btnJoin = sheetView.findViewById(R.id.btn_join);
         Button endCarReport = sheetView.findViewById(R.id.btn_endCarReport);
 
-
-        String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
+        String currentUid = "";
+        if (user != null)
+        {
+            currentUid = user.getUid();
+        }
         if (currentUid.equals(carReport.getUid()))
         {
             btnJoin.setVisibility(View.INVISIBLE);
-            endCarReport.setOnClickListener(v -> {
+            endCarReport.setOnClickListener(v ->
+            {
                 carReport.setActive(false);
                 removeCarReportMarkerLive(carReport);
+                addPointsForCarReport(carReport);
                 db.collection("carReports").document(carReport.getDocumentId()).delete()
                         .addOnSuccessListener(aVoid -> Log.d("Delete_Report", "Document successfully deleted!"))
                         .addOnFailureListener(e -> Log.e("Delete_Report", "Error deleting document", e));
+                bottomSheetDialog.dismiss();
             });
-            bottomSheetDialog.dismiss();
-        }
-        else
+        } else if (user != null)
         {
             btnJoin.setVisibility(View.VISIBLE);
             endCarReport.setVisibility(View.INVISIBLE);
         }
+        else
+        {
+            btnJoin.setVisibility(View.INVISIBLE);
+            endCarReport.setVisibility(View.INVISIBLE);
+        }
 
-        // Sofőr email vagy UID
-        tvDriver.setText("Sofőr: " + carReport.getUid());
+        // Sofőr UID alapján lekérjük a felhasználónevet
+        db.collection("Users").document(carReport.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String username = documentSnapshot.getString("username");
+                        tvDriver.setText("Sofőr: " + username);
+                    } else {
+                        tvDriver.setText("Sofőr: ismeretlen");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    tvDriver.setText("Sofőr: hiba a lekéréskor");
+                    Log.e("CarReport", "Hiba a sofőr lekérésekor: " + e.getMessage());
+                });
+
         tvFromTo.setText(carReport.getFromCity() + " → " + carReport.getToCity());
 
         int bookedSeats = carReport.getAccepted().size() + 1;
-        tvSeats.setText("Helyek: " + bookedSeats +"/"+ carReport.getSeatsAvailable());
+        tvSeats.setText("Helyek: " + bookedSeats + "/" + carReport.getSeatsAvailable());
         tvComment.setText("Megjegyzés: " + (carReport.getComment().isEmpty() ? "nincs" : carReport.getComment()));
 
-        if (bookedSeats >= carReport.getSeatsAvailable()) {
+        if (bookedSeats >= carReport.getSeatsAvailable())
+        {
             btnJoin.setEnabled(false);
             btnJoin.setText("Már betelt");
         }
 
-        btnJoin.setOnClickListener(v -> {
+        btnJoin.setOnClickListener(v ->
+        {
             var User = FirebaseAuth.getInstance().getCurrentUser();
 
             boolean alreadyApplied = carReport.getApplicants() != null &&
@@ -361,20 +401,23 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             boolean alreadyAccepted = carReport.getAccepted() != null &&
                     carReport.getAccepted().contains(user.getUid());
 
-            if (alreadyApplied || alreadyAccepted) {
+            if (alreadyApplied || alreadyAccepted)
+            {
                 Toast.makeText(this, "Már jelentkeztél erre az útra!", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            Applicant applicant = new Applicant(user.getUid(),userCurrentLocation.latitude,userCurrentLocation.longitude);
+            Applicant applicant = new Applicant(user.getUid(), userCurrentLocation.latitude, userCurrentLocation.longitude);
             db.collection("carReports")
                     .document(carReport.getDocumentId())
                     .update("applicants", FieldValue.arrayUnion(applicant))
-                    .addOnSuccessListener(aVoid -> {
+                    .addOnSuccessListener(aVoid ->
+                    {
                         Toast.makeText(this, "Jelentkezés elküldve!", Toast.LENGTH_SHORT).show();
                         bottomSheetDialog.dismiss();
                     })
-                    .addOnFailureListener(e -> {
+                    .addOnFailureListener(e ->
+                    {
                         Toast.makeText(this, "Hiba: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         });
@@ -457,7 +500,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private void removeReportMarkerLive(Report report)
     {
         double starting_latitude = report.getStartingLatitude();
-        double starting_longitude =report.getStartingLongitude();
+        double starting_longitude = report.getStartingLongitude();
         double destination_latitude = report.getDestinationLatitude();
         double destination_longitude = report.getDestinationLongitude();
 
@@ -475,6 +518,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             }
         }
     }
+
     private void removeApplicantMarkerLive(Applicant applicant)
     {
         double starting_latitude = applicant.getStartingLatitude();
@@ -494,6 +538,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             }
         }
     }
+
     private void removeCarReportMarkerLive(CarReport carReport)
     {
         double starting_latitude = carReport.getStartingLatitude();
@@ -553,7 +598,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     {
         if (userIsLoggedIn) openReportSheetDialog();
         else
-            Toast.makeText(this, "You need to login to report a problem", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Ahhoz, hogy bejelents egy problémát, be kell jelentkezned!", Toast.LENGTH_SHORT).show();
     }
 
     public void displayAllMarkers()
@@ -623,7 +668,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             carReportmarkersList.add(startMarker);
             carReportmarkersList.add(endMarker);
         }
-        if(currentCarReport.getUid().equals(user.getUid()))
+        if (user != null && currentCarReport.getUid().equals(user.getUid()))
         {
             // Applicants hozzáadása a térképhez
             int applicantResId = getResources().getIdentifier("applicant", "drawable", getPackageName());
@@ -631,9 +676,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             Bitmap resizedApplicantBitmap = Bitmap.createScaledBitmap(applicantBitmap, 100, 100, false);
             BitmapDescriptor applicantIcon = BitmapDescriptorFactory.fromBitmap(resizedApplicantBitmap);
 
-            for (Applicant applicant : currentCarReport.getApplicants()) {
+            for (Applicant applicant : currentCarReport.getApplicants())
+            {
                 LatLng applicantLatLng = new LatLng(applicant.getStartingLatitude(), applicant.getStartingLongitude());
-                if (!markerExists(applicantLatLng)) {
+                if (!markerExists(applicantLatLng))
+                {
                     Marker applicantMarker = mMap.addMarker(new MarkerOptions()
                             .position(applicantLatLng)
                             .icon(applicantIcon));
@@ -649,14 +696,18 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
     }
 
-    private boolean markerExists(LatLng position) {
-        for (Marker m : reportmarkersList) {
-            if (m.getPosition().equals(position)) {
+    private boolean markerExists(LatLng position)
+    {
+        for (Marker m : reportmarkersList)
+        {
+            if (m.getPosition().equals(position))
+            {
                 return true;
             }
         }
         return false;
     }
+
     private void addMarkersFromReport(Report report)
     {
         LatLng startLatLng = new LatLng(report.getStartingLatitude(), report.getStartingLongitude());
@@ -718,7 +769,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         {
             LatLng candidate = userCurrentLocation;
             int attempts = 0;
-            while (isPositionTaken(candidate) && attempts < 100) {
+            while (isPositionTaken(candidate) && attempts < 100)
+            {
                 candidate = new LatLng(
                         candidate.latitude + (Math.random() - 0.5) * 0.0002,
                         candidate.longitude + (Math.random() - 0.5) * 0.0002
@@ -730,7 +782,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     .draggable(true)
                     .title("Itt vagy éppen!"));
 
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(startingMarker.getPosition(), 20));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(startingMarker.getPosition(), 15));
             okIMG.setVisibility(View.VISIBLE);
             cancelIMG.setVisibility(View.VISIBLE);
         }
@@ -766,15 +818,19 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             if (destinationMarker != null)
             {
                 Geocoder geocoder = new Geocoder(this.getApplicationContext(), Locale.getDefault());
-                try {
+                try
+                {
                     List<Address> addresses = geocoder.getFromLocation(destinationMarker.getPosition().latitude, destinationMarker.getPosition().longitude, 1);
-                    if (addresses != null && !addresses.isEmpty()) {
+                    if (addresses != null && !addresses.isEmpty())
+                    {
                         String city = addresses.get(0).getLocality();
                         autocompleteSupportFragment.setText(city);
-                    } else {
+                    } else
+                    {
                         autocompleteSupportFragment.setText("Destination not found");
                     }
-                } catch (IOException e) {
+                } catch (IOException e)
+                {
                     e.printStackTrace();
                     autocompleteSupportFragment.setText("Error getting destination");
                 }
@@ -798,22 +854,27 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
             bottomSheetDialog.setOnDismissListener(x ->
             {
-                if (spinnerTransport != null && spinnerProblem != null && delayEditText != null && detailsEditText != null) {
+                if (spinnerTransport != null && spinnerProblem != null && delayEditText != null && detailsEditText != null)
+                {
                     selectedTransport = (int) spinnerTransport.getSelectedItemId();
                     selectedProblem = (int) spinnerProblem.getSelectedItemId();
                     problemDetailsText = detailsEditText.getText().toString();
-                    try {
+                    try
+                    {
                         delayMinutes = Integer.parseInt(delayEditText.getText().toString());
-                    } catch (Exception e) {
+                    } catch (Exception e)
+                    {
                         delayMinutes = 0;
                     }
                 }
             });
 
 
-            cancelButton.setOnClickListener(x -> {
+            cancelButton.setOnClickListener(x ->
+            {
                 bottomSheetDialog.dismiss();
-                if (startingMarker != null) {
+                if (startingMarker != null)
+                {
                     startingMarker.remove();
                     startingMarker = null;
                 }
@@ -832,15 +893,18 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 String problemType = spinnerProblem.getSelectedItem().toString();
                 String problemDetails = detailsEditText.getText().toString();
 
-                if (destinationMarker == null) {
+                if (destinationMarker == null)
+                {
                     Toast.makeText(this, "Kérem adja meg a végállomást!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 int delay;
-                try {
+                try
+                {
                     delay = Integer.parseInt(delayEditText.getText().toString());
-                } catch (Exception e) {
+                } catch (Exception e)
+                {
                     Toast.makeText(this, "Kérem adja meg mennyi percet késik. (0, ha nincs késés)", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -871,6 +935,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             bottomSheetDialog.show();
         });
     }
+
     private void removeAutoFragment(AutocompleteSupportFragment autocompleteSupportFragment)
     {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
@@ -928,6 +993,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             {
                 Log.i("error", status.toString());
             }
+
             @Override
             public void onPlaceSelected(@NonNull Place place)
             {
@@ -956,12 +1022,13 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                         .title("Végállomás")
                         .draggable(true));
 
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(candidate, 20));
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(candidate, 15));
 
                 removeAutoFragment(autocompleteSupportFragment);
             }
         });
     }
+
     private boolean isPositionTaken(LatLng pos)
     {
         for (MarkerPair item : markerPairs)
@@ -974,6 +1041,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         }
         return false;
     }
+
     private boolean areLatLngEqual(LatLng pos1, LatLng pos2)
     {
         return Math.abs(pos1.latitude - pos2.latitude) < TOLERANCE &&
@@ -991,16 +1059,20 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     .whereEqualTo("email", user.getEmail())
                     .limit(1)
                     .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        if (!querySnapshot.isEmpty()) {
+                    .addOnSuccessListener(querySnapshot ->
+                    {
+                        if (!querySnapshot.isEmpty())
+                        {
                             DocumentSnapshot userDoc = querySnapshot.getDocuments().get(0);
                             String roleFromDb = userDoc.getString("role");
-                            if (roleFromDb != null) {
+                            if (roleFromDb != null)
+                            {
                                 currentUserRole = roleFromDb;
                             }
                         }
                     })
-                    .addOnFailureListener(e -> {
+                    .addOnFailureListener(e ->
+                    {
                         Log.e("FetchRole", "Hiba a szerep lekérésekor: " + e.getMessage());
                     });
         }
@@ -1010,7 +1082,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         Report report = (Report) selectedMarker.getTag();
-        if (currentUser == null) {
+        if (currentUser == null)
+        {
             Toast.makeText(this, "Be kell jelentkezned a like-hoz!", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -1024,13 +1097,15 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 .collection("likes")
                 .document(userId);
 
-        likeRef.get().addOnSuccessListener(documentSnapshot -> {
+        likeRef.get().addOnSuccessListener(documentSnapshot ->
+        {
             if (documentSnapshot.exists())
             {
-                likeRef.delete().addOnSuccessListener(aVoid -> {
+                likeRef.delete().addOnSuccessListener(aVoid ->
+                {
                     Toast.makeText(this, "Like visszavonva", Toast.LENGTH_SHORT).show();
                 });
-                getLikeCount(report.getDocumentId(),currentBottomSheetView);
+                getLikeCount(report.getDocumentId(), currentBottomSheetView);
             } else
             {
                 Map<String, Object> likeData = new HashMap<>();
@@ -1040,7 +1115,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 {
                     Toast.makeText(this, "Like hozzáadva", Toast.LENGTH_SHORT).show();
                 });
-                getLikeCount(report.getDocumentId(),currentBottomSheetView);
+                getLikeCount(report.getDocumentId(), currentBottomSheetView);
             }
         });
     }
@@ -1065,7 +1140,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         Button editStartMarker = currentBottomSheetView.findViewById(R.id.btn_set_start_location);
         Button editDestinationMarker = currentBottomSheetView.findViewById(R.id.btn_set_end_location);
 
-        Report report = (Report)selectedMarker.getTag();
+        Report report = (Report) selectedMarker.getTag();
 
         if (user == null || (!"admin".equals(currentUserRole) && !report.getUid().equals(user.getUid())))
         {
@@ -1075,21 +1150,24 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             delayEditText.setEnabled(false);
             editButton.setVisibility(View.INVISIBLE);
             deleteButton.setVisibility(View.INVISIBLE);
-            startingCityEditText.setVisibility(View.INVISIBLE);
-            destinationCityEditText.setVisibility(View.INVISIBLE);
+            editStartMarker.setVisibility(View.GONE);
+            editDestinationMarker.setVisibility(View.GONE);
+            startingCityEditText.setVisibility(View.GONE);
+            destinationCityEditText.setVisibility(View.GONE);
         }
 
         setupSpinnersForReportSheet(currentBottomSheetView);
 
         detailsEditText.setText(report.getDescription());
         delayEditText.setText(String.valueOf(report.getDelay()));
-        startingCityEditText.setText(report.getCity(geocoder,report.getStartingLatitude(),report.getStartingLongitude()));
-        destinationCityEditText.setText(report.getCity(geocoder,report.getDestinationLatitude(),report.getDestinationLongitude()));
+        startingCityEditText.setText(report.getCity(geocoder, report.getStartingLatitude(), report.getStartingLongitude()));
+        destinationCityEditText.setText(report.getCity(geocoder, report.getDestinationLatitude(), report.getDestinationLongitude()));
 
         setSpinnerSelectionByValue(spinnerTransport, report.getMeanOfTransport());
         setSpinnerSelectionByValue(spinnerProblem, report.getType());
 
-        editButton.setOnClickListener(v -> {
+        editButton.setOnClickListener(v ->
+        {
             editReport(report);
             bottomSheetDialog.dismiss();
         });
@@ -1101,12 +1179,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             okIMG_editing.setVisibility(View.VISIBLE);
             cancelIMG_editing.setVisibility(View.VISIBLE);
 
-            if(areLatLngEqual(new LatLng(report.getStartingLatitude(),report.getStartingLongitude()),selectedMarker.getPosition()))
+            if (areLatLngEqual(new LatLng(report.getStartingLatitude(), report.getStartingLongitude()), selectedMarker.getPosition()))
             {
                 //ha a kiválasztott marker az kezdő marker
                 startingMarker = selectedMarker;
-            }
-            else
+            } else
             {
                 startingMarker = getPairedMarker(selectedMarker);
             }
@@ -1115,8 +1192,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
             startingMarker.setDraggable(true);
 
-            okIMG_editing.setOnClickListener(v1 -> {
-                startingCityEditText.setText(report.getCity(geocoder,startingMarker.getPosition().latitude,startingMarker.getPosition().longitude));
+            okIMG_editing.setOnClickListener(v1 ->
+            {
+                startingCityEditText.setText(report.getCity(geocoder, startingMarker.getPosition().latitude, startingMarker.getPosition().longitude));
                 okIMG_editing.setVisibility(View.INVISIBLE);
                 cancelIMG_editing.setVisibility(View.INVISIBLE);
                 report.setStartingLatitude(startingMarker.getPosition().latitude);
@@ -1129,7 +1207,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 okIMG_editing.setVisibility(View.INVISIBLE);
                 cancelIMG_editing.setVisibility(View.INVISIBLE);
 
-                startingMarker.setPosition(new LatLng(report.getStartingLatitude(),report.getStartingLongitude()));
+                startingMarker.setPosition(new LatLng(report.getStartingLatitude(), report.getStartingLongitude()));
             });
         });
 
@@ -1139,12 +1217,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             okIMG_editing.setVisibility(View.VISIBLE);
             cancelIMG_editing.setVisibility(View.VISIBLE);
 
-            if(areLatLngEqual(new LatLng(report.getDestinationLatitude(),report.getDestinationLatitude()),selectedMarker.getPosition()))
+            if (areLatLngEqual(new LatLng(report.getDestinationLatitude(), report.getDestinationLatitude()), selectedMarker.getPosition()))
             {
                 //ha a kiválasztott marker az kezdő marker
                 destinationMarker = selectedMarker;
-            }
-            else
+            } else
             {
                 destinationMarker = getPairedMarker(selectedMarker);
             }
@@ -1153,8 +1230,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
             destinationMarker.setDraggable(true);
 
-            okIMG_editing.setOnClickListener(v1 -> {
-                destinationCityEditText.setText(report.getCity(geocoder,destinationMarker.getPosition().latitude,destinationMarker.getPosition().longitude));
+            okIMG_editing.setOnClickListener(v1 ->
+            {
+                destinationCityEditText.setText(report.getCity(geocoder, destinationMarker.getPosition().latitude, destinationMarker.getPosition().longitude));
                 okIMG_editing.setVisibility(View.INVISIBLE);
                 cancelIMG_editing.setVisibility(View.INVISIBLE);
 
@@ -1169,17 +1247,19 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 okIMG_editing.setVisibility(View.INVISIBLE);
                 cancelIMG_editing.setVisibility(View.INVISIBLE);
 
-                destinationMarker.setPosition(new LatLng(report.getDestinationLatitude(),report.getDestinationLongitude()));
+                destinationMarker.setPosition(new LatLng(report.getDestinationLatitude(), report.getDestinationLongitude()));
             });
         });
 
 
-        deleteButton.setOnClickListener(v -> {
+        deleteButton.setOnClickListener(v ->
+        {
             removePairMarkers(report);
             bottomSheetDialog.dismiss();
         });
 
-        cancelButton.setOnClickListener(v -> {
+        cancelButton.setOnClickListener(v ->
+        {
             bottomSheetDialog.dismiss();
         });
 
@@ -1192,13 +1272,16 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
     private void setSpinnerSelectionByValue(Spinner spinner, String value)
     {
-        for (int i = 0; i < spinner.getCount(); i++) {
-            if (spinner.getItemAtPosition(i).toString().equals(value)) {
+        for (int i = 0; i < spinner.getCount(); i++)
+        {
+            if (spinner.getItemAtPosition(i).toString().equals(value))
+            {
                 spinner.setSelection(i);
                 break;
             }
         }
     }
+
     private void editReport(Report report)
     {
         String selectedTransport = spinnerTransport.getSelectedItem().toString();
@@ -1207,9 +1290,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         String delayText = delayEditText.getText().toString();
 
         int delay = 0;
-        try {
+        try
+        {
             delay = Integer.parseInt(delayText);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException e)
+        {
             Log.e("Edit_Report", "Hibás késés érték: " + delayText);
         }
 
@@ -1229,26 +1314,29 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         }
 
         String docId = report.getDocumentId();
-        if (docId != null && !docId.isEmpty()) {
+        if (docId != null && !docId.isEmpty())
+        {
             db.collection("reports").document(docId)
                     .set(report)
                     .addOnSuccessListener(aVoid -> Log.d("Edit_Report", "Report sikeresen frissítve"))
                     .addOnFailureListener(e -> Log.e("Edit_Report", "Hiba történt a frissítés során", e));
-        } else {
+        } else
+        {
             Log.e("Edit_Report", "Nincs documentId beállítva, nem lehet frissíteni");
         }
     }
+
     private void removePairMarkers(Report report)
     {
         //a kiválasztott marker törlése
         Iterator<MarkerPair> iterator = this.markerPairs.iterator();
-        while (iterator.hasNext()) {
+        while (iterator.hasNext())
+        {
             MarkerPair item = iterator.next();
             if (selectedMarker.getId().equals(item.startMarker.getId()))
             {
                 item.startMarker.remove();
-            }
-            else if(selectedMarker.getId().equals(item.endMarker.getId()))
+            } else if (selectedMarker.getId().equals(item.endMarker.getId()))
             {
                 item.endMarker.remove();
             }
@@ -1273,11 +1361,13 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     break;
                 }
             }
-            if (toRemove != null) {
+            if (toRemove != null)
+            {
                 markerPairs.remove(toRemove);
             }
         }
 
+        addPointsForReport(report);
         //report törlése adatbázisban
         db.collection("reports").document(report.getDocumentId()).delete()
                 .addOnSuccessListener(aVoid -> Log.d("Delete_Report", "Document successfully deleted!"))
@@ -1300,19 +1390,23 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         }
         return null;
     }
-    private void getLikeCount(String reportId, final View rootView) {
+
+    private void getLikeCount(String reportId, final View rootView)
+    {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("reports")
                 .document(reportId)
                 .collection("likes")
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
+                .addOnSuccessListener(queryDocumentSnapshots ->
+                {
                     int likeCount = queryDocumentSnapshots.size();
 
                     TextView likeCountTextView = rootView.findViewById(R.id.tv_like_count);
                     likeCountTextView.setText(String.valueOf(likeCount));
                 })
-                .addOnFailureListener(e -> {
+                .addOnFailureListener(e ->
+                {
                     Log.e("LikeCount", "Hiba a lájkok lekérésekor: ", e);
                 });
     }
@@ -1321,7 +1415,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     {
         autocompleteSupportFragmentCarReport = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment_car_report);
-        autocompleteSupportFragmentCarReport.setTypeFilter(TypeFilter.CITIES);
+        autocompleteSupportFragmentCarReport.setTypeFilter(TypeFilter.ADDRESS);
         List<Address> address = null;
         try
         {
@@ -1345,6 +1439,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             {
                 Log.i("error", status.toString());
             }
+
             @Override
             public void onPlaceSelected(@NonNull Place place)
             {
@@ -1373,20 +1468,28 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                         .title("Végállomás")
                         .draggable(true));
 
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(candidate, 20));
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(candidate, 15));
 
             }
         });
     }
+
     public void openCarReportSheetDialog(View view)
     {
-        if (startingMarker == null) {
+        if(!userIsLoggedIn)
+        {
+            Toast.makeText(this, "Ahhoz, hogy utazást hirdess meg, be kell jelentkezned!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (startingMarker == null)
+        {
             LatLng candidate = userCurrentLocation;
             startingMarker = mMap.addMarker(new MarkerOptions()
                     .position(candidate)
                     .draggable(true)
                     .title("Indulás"));
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(startingMarker.getPosition(), 20));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(startingMarker.getPosition(), 15));
         }
 
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
@@ -1418,7 +1521,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         });
 
 
-        okIMG.setOnClickListener(v -> {
+        okIMG.setOnClickListener(v ->
+        {
             bottomSheetDialog.setContentView(sheetView);
             bottomSheetDialog.setCanceledOnTouchOutside(false);
             bottomSheetDialog.setDismissWithAnimation(false);
@@ -1426,15 +1530,19 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             if (destinationMarker != null)
             {
                 Geocoder geocoder = new Geocoder(this.getApplicationContext(), Locale.getDefault());
-                try {
+                try
+                {
                     List<Address> addresses = geocoder.getFromLocation(destinationMarker.getPosition().latitude, destinationMarker.getPosition().longitude, 1);
-                    if (addresses != null && !addresses.isEmpty()) {
+                    if (addresses != null && !addresses.isEmpty())
+                    {
                         String city = addresses.get(0).getLocality();
                         autocompleteSupportFragmentCarReport.setText(city);
-                    } else {
+                    } else
+                    {
                         autocompleteSupportFragmentCarReport.setText("Destination not found");
                     }
-                } catch (IOException e) {
+                } catch (IOException e)
+                {
                     e.printStackTrace();
                     autocompleteSupportFragmentCarReport.setText("Error getting destination");
                 }
@@ -1448,25 +1556,29 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         if (startingMarker != null)
         {
             List<Address> Address = null;
-            try {
+            try
+            {
                 Address = geocoder.getFromLocation(startingMarker.getPosition().latitude, startingMarker.getPosition().longitude, 1);
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 throw new RuntimeException(e);
             }
             fromCityEt.setText(Address.get(0).getLocality());
         }
 
 
-
         Button cancelButton = sheetView.findViewById(R.id.btn_cancel);
         Button submitButton = sheetView.findViewById(R.id.btn_submit);
 
-        cancelButton.setOnClickListener(v -> {
-            if (startingMarker != null) {
+        cancelButton.setOnClickListener(v ->
+        {
+            if (startingMarker != null)
+            {
                 startingMarker.remove();
                 startingMarker = null;
             }
-            if (destinationMarker != null) {
+            if (destinationMarker != null)
+            {
                 destinationMarker.remove();
                 destinationMarker = null;
             }
@@ -1474,8 +1586,10 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             removeAutoFragment(autocompleteSupportFragmentCarReport);
         });
 
-        submitButton.setOnClickListener(v -> {
-            if (destinationMarker == null) {
+        submitButton.setOnClickListener(v ->
+        {
+            if (destinationMarker == null)
+            {
                 Toast.makeText(this, "Kérlek add meg a célpontot!", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -1484,9 +1598,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             if (destinationMarker != null)
             {
                 List<Address> Address = null;
-                try {
+                try
+                {
                     Address = geocoder.getFromLocation(destinationMarker.getPosition().latitude, destinationMarker.getPosition().longitude, 1);
-                } catch (IOException e) {
+                } catch (IOException e)
+                {
                     throw new RuntimeException(e);
                 }
                 toCity = (Address.get(0).getLocality());
@@ -1498,7 +1614,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             String seatsText = seatsEt.getText().toString();
             String comment = commentEt.getText().toString();
 
-            if (fromCity.isEmpty() || seatsText.isEmpty()) {
+            if (fromCity.isEmpty() || seatsText.isEmpty())
+            {
                 Toast.makeText(this, "Minden mező kitöltése kötelező!", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -1519,12 +1636,14 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             );
 
             db.collection("carReports").add(carReport)
-                    .addOnSuccessListener(doc -> {
+                    .addOnSuccessListener(doc ->
+                    {
                         String generatedId = doc.getId();
                         doc.update("documentId", generatedId);
                         Toast.makeText(this, "Utazás sikeresen meghirdetve!", Toast.LENGTH_SHORT).show();
                     })
-                    .addOnFailureListener(e -> {
+                    .addOnFailureListener(e ->
+                    {
                         Toast.makeText(this, "Hiba történt: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
 
@@ -1539,4 +1658,52 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
         bottomSheetDialog.show();
     }
+
+    private void addPointsForReport(Report report)
+    {
+        FirebaseFirestore.getInstance()
+                .collection("reports")
+                .document(report.getDocumentId())
+                .collection("likes")
+                .get()
+                .addOnSuccessListener(likes ->
+                {
+                    int points = likes.size() * POINTS_FOR_REPORT_PER_LIKE;
+                    if (points > 0)
+                    {
+                        db.collection("Users").document(report.getUid())
+                                .update("points", FieldValue.increment(points));
+                    }
+                });
+    }
+
+    private void addPointsForCarReport(CarReport carReport)
+    {
+        int acceptedCount = carReport.getAccepted().size();
+        if (acceptedCount > 0)
+        {
+            int points = acceptedCount * POINTS_FOR_CAR_REPORT_PER_USER;
+            db.collection("Users").document(carReport.getUid())
+                    .update("points", FieldValue.increment(points));
+        }
+    }
+
+    public void focusApplicantOnMap(Applicant applicant) {
+        if (mMap == null) return; // GoogleMap objektum
+
+        LatLng position = new LatLng(applicant.getStartingLatitude(), applicant.getStartingLongitude());
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 15));
+
+
+        for (Marker marker : applicantMarkersList) {
+            LatLng pos = marker.getPosition();
+            if (pos.latitude == applicant.getStartingLatitude() && pos.longitude == applicant.getStartingLatitude()) {
+
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(pos, 15f));
+                marker.showInfoWindow();
+                break;
+            }
+        }
+    }
+
 }

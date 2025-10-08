@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "27054539850",
+    "firebase_url": "https://tomegkozlekedesjelento-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "tomegkozlekedesjelento",
+    "storage_bucket": "tomegkozlekedesjelento.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27054539850:android:7fb3853101d59db89692b3",
+        "android_client_info": {
+          "package_name": "szakdolgozat.tomegkozlekedesjelento"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "27054539850-91tl2rocteljkisj8h6ia0ghosmnlmbn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "szakdolgozat.tomegkozlekedesjelento",
+            "certificate_hash": "b844ba2206e76d6d1c310fd35281dbe2378a817e"
+          }
+        },
+        {
+          "client_id": "27054539850-qtaogm1711valsbpre1rtfsv7hrps3dr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaom2fvNvPp0w89PqcmEsNEQaC9JUZNLM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "27054539850-qtaogm1711valsbpre1rtfsv7hrps3dr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

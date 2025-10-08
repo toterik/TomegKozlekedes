@@ -37,15 +37,17 @@ public class RegistrationActivity extends MenuForAllActivity {
     }
 
     public void registrationByEmailAndPassword(View view) {
+        EditText usernameET = findViewById(R.id.username);
         EditText emailET = findViewById(R.id.email);
         EditText passwordET = findViewById(R.id.password);
         EditText passwordagainET = findViewById(R.id.passwordagain);
 
+        String username = usernameET.getText().toString().trim();
         String email = emailET.getText().toString().trim();
         String password = passwordET.getText().toString();
         String passwordagain = passwordagainET.getText().toString();
 
-        if (email.isEmpty() || password.isEmpty() || passwordagain.isEmpty()) {
+        if (username.isEmpty() || email.isEmpty() || password.isEmpty() || passwordagain.isEmpty()) {
             Toast.makeText(this, "Minden mezőt ki kell tölteni!", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -55,32 +57,49 @@ public class RegistrationActivity extends MenuForAllActivity {
             return;
         }
 
+        // Ellenőrizzük, hogy a username már létezik-e
+        db.collection("Users")
+                .whereEqualTo("username", username)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        Toast.makeText(this, "Ez a felhasználónév már foglalt!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        // Username szabad, létrehozzuk a felhasználót
+                        createFirebaseUser(email, password, username);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Hiba történt a felhasználónév ellenőrzése során!", Toast.LENGTH_SHORT).show();
+                    Log.e("RegistrationActivity", "Username check error: " + e.getMessage());
+                });
+    }
+    private void createFirebaseUser(String email, String password, String username) {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        // Ellenőrző email küldése
                         mAuth.getCurrentUser().sendEmailVerification()
                                 .addOnSuccessListener(unused -> {
-                                    // Firestore-ban tároljuk az adatot
                                     String uid = mAuth.getCurrentUser().getUid();
                                     DocumentReference documentReference = db.collection("Users").document(uid);
 
                                     Map<String, Object> userData = new HashMap<>();
                                     userData.put("email", email);
+                                    userData.put("username", username);
                                     userData.put("role", "user");
 
                                     documentReference.set(userData)
                                             .addOnSuccessListener(aVoid -> {
-                                                Toast.makeText(RegistrationActivity.this, "Sikeres regisztráció!\nA megerősítő emailt elküldtük!", Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(this, "Sikeres regisztráció!\nA megerősítő emailt elküldtük!", Toast.LENGTH_SHORT).show();
                                             })
                                             .addOnFailureListener(e -> {
                                                 Log.e("RegistrationActivity", "Firestore hiba: " + e.getMessage());
-                                                Toast.makeText(RegistrationActivity.this, "A felhasználó mentése sikertelen!", Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(this, "A felhasználó mentése sikertelen!", Toast.LENGTH_SHORT).show();
                                             });
                                 })
                                 .addOnFailureListener(e -> {
                                     Log.e("RegistrationActivity", "Email nem lett elküldve: " + e.getMessage());
-                                    Toast.makeText(RegistrationActivity.this, "Email nem lett elküldve!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, "Email nem lett elküldve!", Toast.LENGTH_SHORT).show();
                                 });
                     } else {
                         Exception e = task.getException();
@@ -97,4 +116,5 @@ public class RegistrationActivity extends MenuForAllActivity {
                     }
                 });
     }
+
 }

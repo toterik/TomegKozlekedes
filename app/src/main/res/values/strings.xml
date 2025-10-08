@@ -40,6 +40,8 @@
     <string name="edit_starting">Kezdőpont beállítása</string>
     <string name="like">Like</string>
     <string name="utaz_saim">Utazásaim</string>
+    <string name="ranglista">Ranglista</string>
+    <string name="keres_s_n_v_alapj_n">Keresés név alapján...</string>
 
     <string-array name="means_of_transport">
         <item>Busz</item>

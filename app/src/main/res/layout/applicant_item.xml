@@ -1,26 +1,63 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dp">
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@android:color/white">
 
+    <!-- Felhasználónév -->
     <TextView
         android:id="@+id/tv_applicant_name"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Email"
-        android:textSize="16sp"/>
+        android:text="Felhasználónév"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:paddingBottom="4dp"
+        android:textColor="@android:color/black" />
 
-    <Button
-        android:id="@+id/btn_accept"
-        android:layout_width="wrap_content"
+    <!-- Honnan jelentkezik -->
+    <TextView
+        android:id="@+id/tv_applicant_from"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Elfogad" />
+        android:text="Honnan jelentkezik"
+        android:textSize="14sp"
+        android:textColor="@android:color/darker_gray"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:paddingBottom="12dp" />
 
-    <Button
-        android:id="@+id/btn_reject"
-        android:layout_width="wrap_content"
+    <!-- Gombok -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Elutasít" />
+        android:orientation="horizontal">
+
+        <!-- Spacer a gombok balra tolásához -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btn_accept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Elfogad"
+            android:backgroundTint="#4CAF50"
+            android:textColor="@android:color/white"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btn_reject"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Elutasít"
+            android:backgroundTint="#F44336"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+
 </LinearLayout>

@@ -1,18 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
-    android:id="@+id/main"
     android:padding="8dp">
 
-    <!-- Include Toolbar Layout -->
+    <!-- Toolbar -->
     <include
         layout="@layout/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <!-- City filter row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -25,29 +23,26 @@
             android:text="@string/search_for_city"
             android:textSize="18sp"
             android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            />
+            android:paddingBottom="8dp"/>
 
         <EditText
             android:id="@+id/et_city_filter"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="50dp"
-            android:gravity="center"
+            android:gravity="center_vertical"
             android:hint="@string/budapest"/>
 
         <ImageView
             android:id="@+id/img_search"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:layout_gravity="bottom|end"
-            android:layout_marginStart="0dp"
-            android:layout_marginBottom="20dp"
+            android:layout_marginStart="8dp"
             android:onClick="filterCity"
             android:src="@drawable/search_icon" />
-
     </LinearLayout>
 
+    <!-- Transport Spinner row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -55,20 +50,19 @@
         android:padding="0dp">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="@string/mean_of_transport"
             android:textSize="18sp"
             android:fontFamily="sans-serif-medium"
-            android:paddingBottom="8dp"
-            android:layout_weight="1"/>
+            android:paddingBottom="8dp"/>
 
         <Spinner
             android:id="@+id/spinner_transport"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_weight="1"/>
-
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"/>
     </LinearLayout>
 
     <!-- Header Row -->
@@ -78,42 +72,38 @@
         android:orientation="horizontal"
         android:padding="8dp">
 
-        <!-- Starting City Header -->
         <TextView
             android:id="@+id/tvStartingCityHeader"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
             android:layout_weight="3"
             android:gravity="center"
+            android:layout_height="wrap_content"
             android:text="@string/starting_city"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"/>
 
-        <!-- Destination City Header -->
         <TextView
             android:id="@+id/tvDestinationCityHeader"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
             android:layout_weight="3"
             android:gravity="center"
+            android:layout_height="wrap_content"
             android:text="@string/destination_city"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"/>
 
-        <!-- Details Header (Empty space) -->
         <TextView
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2" />
+            android:layout_weight="2"
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 
-    <!-- RecyclerView to display the items -->
+    <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:padding="8dp"
-        android:layout_marginTop="8dp"
-        android:scrollbars="vertical" />
-
+        android:scrollbars="vertical"/>
 </LinearLayout>

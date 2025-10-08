@@ -14,6 +14,10 @@
         android:title="@string/utaz_saim">
     </item>
     <item
+        android:id="@+id/leaderboard"
+        android:title="@string/ranglista">
+    </item>
+    <item
         android:id="@+id/registration_item"
         android:title="@string/register">
     </item>
@@ -25,4 +29,5 @@
         android:id="@+id/logout_item"
         android:title="@string/logout">
     </item>
+
 </menu>

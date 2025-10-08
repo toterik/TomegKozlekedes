@@ -71,7 +71,7 @@ public class LoginActivity extends MenuForAllActivity
                 {
                     Toast.makeText(LoginActivity.this, "Authentication successful.", Toast.LENGTH_SHORT).show();
 
-                    Intent intent = new Intent(this, MainActivity.class);
+                    Intent intent = new Intent(this, MapsActivity.class);
                     startActivity(intent);
                 }
                 else

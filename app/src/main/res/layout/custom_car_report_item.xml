@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:background="@android:color/white">
 
     <!-- Starting City Item -->
     <TextView
@@ -14,8 +15,10 @@
         android:layout_weight="3"
         android:gravity="center"
         android:text="@string/starting_city"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:textColor="@android:color/black" />
 
+    <!-- Destination City Item -->
     <TextView
         android:id="@+id/reportsDestinationCity"
         android:layout_width="0dp"
@@ -23,9 +26,10 @@
         android:layout_weight="3"
         android:gravity="center"
         android:text="@string/destination_city"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:textColor="@android:color/black" />
 
-    <!-- Details Button -->
+    <!-- Applicants Button -->
     <Button
         android:id="@+id/btn_applicants"
         android:layout_width="0dp"
@@ -33,5 +37,9 @@
         android:layout_weight="2"
         android:padding="8dp"
         android:text="Jelentkezők"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:backgroundTint="#ADD8E6"
+        android:textColor="@android:color/black"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp" />
 </LinearLayout>
