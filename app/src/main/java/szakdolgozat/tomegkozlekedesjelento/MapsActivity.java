@@ -2,11 +2,17 @@ package szakdolgozat.tomegkozlekedesjelento;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
+import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -15,14 +21,19 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -40,13 +51,16 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.LocalDate;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.TypeFilter;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 
 import com.google.firebase.auth.FirebaseUser;
@@ -64,8 +78,13 @@ import com.google.type.DateTime;
 import android.Manifest.permission;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -125,8 +144,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     EditText delayEditText;
     EditText startingCityEditText;
     EditText destinationCityEditText;
-
-
+    private int startHour, startMinute;
+    private int endHour, endMinute;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -218,14 +237,12 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         fetchCurrentLocation();
 
         //gets the marker positions from the database and displays them
-        displayAllMarkers();
-
+        //displayAllMarkers();
+        liveMarkerTracker();
         //zoom and rotation settings on the map
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
 
-        //show changes to makers (e.g. new marker is added)
-        liveMarkerTracker();
 
         mMap.setOnMarkerClickListener(marker ->
         {
@@ -282,7 +299,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                         tvName.setText(email);
                     } else
                     {
-                        tvName.setText("Ismeretlen felhasználó");
+                        tvName.setText(getString(R.string.ismeretlen_felhasznalo));
                     }
                 });
 
@@ -298,7 +315,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     )
                     .addOnSuccessListener(unused ->
                     {
-                        Toast.makeText(this, "Elfogadva!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.elfogadva), Toast.LENGTH_SHORT).show();
                         removeApplicantMarkerLive(applicant);
                         bottomSheetDialog.dismiss();
                     });
@@ -313,7 +330,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     .addOnSuccessListener(unused ->
                     {
                         carReport.getApplicants().remove(applicant);
-                        Toast.makeText(this, "Elutasítva!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.elutas_tva), Toast.LENGTH_SHORT).show();
                         bottomSheetDialog.dismiss();
                         removeApplicantMarkerLive(applicant);
                     });
@@ -366,12 +383,15 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         // Sofőr UID alapján lekérjük a felhasználónevet
         db.collection("Users").document(carReport.getUid())
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
+                .addOnSuccessListener(documentSnapshot ->
+                {
+                    if (documentSnapshot.exists())
+                    {
                         String username = documentSnapshot.getString("username");
-                        tvDriver.setText("Sofőr: " + username);
-                    } else {
-                        tvDriver.setText("Sofőr: ismeretlen");
+                        tvDriver.setText(tvDriver.getText()+ " " + username);
+                    } else
+                    {
+                        tvDriver.setText(tvDriver.getText() +" "+ getString(R.string.ismeretlen));
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -382,13 +402,13 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         tvFromTo.setText(carReport.getFromCity() + " → " + carReport.getToCity());
 
         int bookedSeats = carReport.getAccepted().size() + 1;
-        tvSeats.setText("Helyek: " + bookedSeats + "/" + carReport.getSeatsAvailable());
-        tvComment.setText("Megjegyzés: " + (carReport.getComment().isEmpty() ? "nincs" : carReport.getComment()));
+        tvSeats.setText(getString(R.string.helyek) + bookedSeats + "/" + carReport.getSeatsAvailable());
+        tvComment.setText(getString(R.string.megjegyz_s) + (carReport.getComment().isEmpty() ? "" : carReport.getComment()));
 
         if (bookedSeats >= carReport.getSeatsAvailable())
         {
             btnJoin.setEnabled(false);
-            btnJoin.setText("Már betelt");
+            btnJoin.setText(getString(R.string.betelt));
         }
 
         btnJoin.setOnClickListener(v ->
@@ -403,7 +423,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
             if (alreadyApplied || alreadyAccepted)
             {
-                Toast.makeText(this, "Már jelentkeztél erre az útra!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.toast_already_applied), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -413,12 +433,12 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     .update("applicants", FieldValue.arrayUnion(applicant))
                     .addOnSuccessListener(aVoid ->
                     {
-                        Toast.makeText(this, "Jelentkezés elküldve!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.toast_application_sent), Toast.LENGTH_SHORT).show();
                         bottomSheetDialog.dismiss();
                     })
                     .addOnFailureListener(e ->
                     {
-                        Toast.makeText(this, "Hiba: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.toast_error_occurred) + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         });
 
@@ -427,76 +447,61 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
     private void liveMarkerTracker()
     {
+        LocalDateTime localDateTime = LocalDateTime.now().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        int nowMinutes = localDateTime.getHour() * 60 + localDateTime.getMinute();
         db.collection("reports")
-                .addSnapshotListener(new EventListener<QuerySnapshot>()
-                {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot snapshots,
-                                        @Nullable FirebaseFirestoreException e)
-                    {
-                        if (e != null)
-                        {
-                            Log.w("TAG", "listen:error", e);
-                            return;
+                .whereLessThanOrEqualTo("start_minutes", nowMinutes)
+                .whereGreaterThanOrEqualTo("end_minutes", nowMinutes)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.w("TAG", "listen:error", e);
+                        return;
+                    }
+                    int a = snapshots.size();
+                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                        Report report = dc.getDocument().toObject(Report.class);
+                        report.setDocumentId(dc.getDocument().getId());
+                        switch (dc.getType()) {
+                            case ADDED:
+                                addMarkersFromReport(report);
+                                break;
+                            case MODIFIED:
+                                removeReportMarkerLive(report);
+                                addMarkersFromReport(report);
+                                break;
+                            case REMOVED:
+                                removeReportMarkerLive(report);
+                                break;
                         }
-
-                        for (DocumentChange dc : snapshots.getDocumentChanges())
-                        {
-                            Report report = dc.getDocument().toObject(Report.class);
-                            report.setDocumentId(dc.getDocument().getId());
-                            switch (dc.getType())
-                            {
-                                case ADDED:
-                                    addMarkersFromReport(report);
-                                    break;
-                                case MODIFIED:
-                                    removeReportMarkerLive(report);
-                                    addMarkersFromReport(report);
-                                    break;
-                                case REMOVED:
-                                    removeReportMarkerLive(report);
-                                    break;
-                            }
-                        }
-
                     }
                 });
+
         db.collection("carReports")
-                .addSnapshotListener(new EventListener<QuerySnapshot>()
-                {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot snapshots,
-                                        @Nullable FirebaseFirestoreException e)
-                    {
-                        if (e != null)
-                        {
-                            Log.w("TAG", "listen:error", e);
-                            return;
-                        }
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.w("TAG", "listen:error", e);
+                        return;
+                    }
 
-                        for (DocumentChange dc : snapshots.getDocumentChanges())
-                        {
-                            CarReport carReport = dc.getDocument().toObject(CarReport.class);
-                            carReport.setDocumentId(dc.getDocument().getId());
-                            switch (dc.getType())
-                            {
-                                case ADDED:
-                                    addMarkersFromCarReport(carReport);
-                                    break;
-                                case MODIFIED:
-                                    removeCarReportMarkerLive(carReport);
-                                    addMarkersFromCarReport(carReport);
-                                    break;
-                                case REMOVED:
-                                    removeCarReportMarkerLive(carReport);
-                                    break;
-                            }
-                        }
 
+                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                        CarReport carReport = dc.getDocument().toObject(CarReport.class);
+                        carReport.setDocumentId(dc.getDocument().getId());
+                        switch (dc.getType()) {
+                            case ADDED:
+                                addMarkersFromCarReport(carReport);
+                                break;
+                            case MODIFIED:
+                                removeCarReportMarkerLive(carReport);
+                                addMarkersFromCarReport(carReport);
+                                break;
+                            case REMOVED:
+                                removeCarReportMarkerLive(carReport);
+                                break;
+                        }
                     }
                 });
     }
-
     private void removeReportMarkerLive(Report report)
     {
         double starting_latitude = report.getStartingLatitude();
@@ -588,7 +593,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 enableMyLocation();
             } else
             {
-                Toast.makeText(this, "Location permission is required to use this feature.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.toast_location_permission_required), Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
@@ -598,38 +603,41 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     {
         if (userIsLoggedIn) openReportSheetDialog();
         else
-            Toast.makeText(this, "Ahhoz, hogy bejelents egy problémát, be kell jelentkezned!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.toast_login_required_for_report), Toast.LENGTH_SHORT).show();
     }
 
-    public void displayAllMarkers()
-    {
-        var markers = db.collection("reports");
-        markers.get().addOnSuccessListener(queryDocumentSnapshots ->
-        {
-            for (QueryDocumentSnapshot document : queryDocumentSnapshots)
-            {
-                Report currentReport = document.toObject(Report.class);
-                currentReport.setDocumentId(document.getId());
-                addMarkersFromReport(currentReport);
-            }
-        }).addOnFailureListener(e ->
-        {
-            Log.e("Marker_Fail", "Error fetching markers", e);
-        });
+    public void displayAllMarkers() {
+        LocalDateTime localDateTime = LocalDateTime.now().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        int nowMinutes = localDateTime.getHour() * 60 + localDateTime.getMinute();
 
-        var carReports = db.collection("carReports");
-        carReports.get().addOnSuccessListener(queryDocumentSnapshots ->
-        {
-            for (QueryDocumentSnapshot document : queryDocumentSnapshots)
-            {
-                CarReport currentCarReport = document.toObject(CarReport.class);
-                currentCarReport.setDocumentId(document.getId());
-                addMarkersFromCarReport(currentCarReport);
-            }
-        }).addOnFailureListener(e ->
-        {
-            Log.e("Marker_Fail", "Error fetching markers", e);
-        });
+        Task<QuerySnapshot> reportsTask = db.collection("reports")
+                .whereLessThanOrEqualTo("start_minutes", nowMinutes)
+                .whereGreaterThanOrEqualTo("end_minutes", nowMinutes)
+                .get();
+
+        Task<QuerySnapshot> carReportsTask = db.collection("carReports")
+                .get();
+
+        Tasks.whenAllSuccess(reportsTask, carReportsTask)
+                .addOnSuccessListener(results -> {
+                    QuerySnapshot reportsSnapshot = (QuerySnapshot) results.get(0);
+                    QuerySnapshot carReportsSnapshot = (QuerySnapshot) results.get(1);
+
+                    for (QueryDocumentSnapshot document : reportsSnapshot) {
+                        Report currentReport = document.toObject(Report.class);
+                        currentReport.setDocumentId(document.getId());
+                        addMarkersFromReport(currentReport);
+                    }
+
+                    for (QueryDocumentSnapshot document : carReportsSnapshot) {
+                        CarReport currentCarReport = document.toObject(CarReport.class);
+                        currentCarReport.setDocumentId(document.getId());
+                        addMarkersFromCarReport(currentCarReport);
+                    }
+
+                    liveMarkerTracker();
+                })
+                .addOnFailureListener(e -> Log.e("Marker_Fail", "Error fetching markers", e));
     }
 
     private void addMarkersFromCarReport(CarReport currentCarReport)
@@ -684,7 +692,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     Marker applicantMarker = mMap.addMarker(new MarkerOptions()
                             .position(applicantLatLng)
                             .icon(applicantIcon));
-
                     if (applicantMarker != null)
                     {
                         applicantMarker.setTag(new ApplicantMarkerInfo(applicant, currentCarReport));
@@ -707,7 +714,21 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         }
         return false;
     }
+    private final Map<String, BitmapDescriptor> iconCache = new HashMap<>();
+    private BitmapDescriptor getTransportIcon(String meanOfTransport) {
+        if (iconCache.containsKey(meanOfTransport)) {
+            return iconCache.get(meanOfTransport);
+        }
 
+        int resourceId = getResources().getIdentifier(meanOfTransport, "drawable", getPackageName());
+
+        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), resourceId);
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, 100, 100, false);
+        BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resizedBitmap);
+
+        iconCache.put(meanOfTransport, icon);
+        return icon;
+    }
     private void addMarkersFromReport(Report report)
     {
         LatLng startLatLng = new LatLng(report.getStartingLatitude(), report.getStartingLongitude());
@@ -725,11 +746,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 .replace("ű", "u");
 
         int resourceId = getResources().getIdentifier(meanOfTransport, "drawable", getPackageName());
-        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), resourceId);
 
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, 100, 100, false);
-
-        BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resizedBitmap);
 
         Marker startMarker = null;
         if (!markerExists(startLatLng))
@@ -737,8 +754,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             startMarker = mMap.addMarker(new MarkerOptions()
                     .position(startLatLng)
                     .title(report.getMarkerTitle(true))
-                    .icon(icon)
-                    .snippet(report.getMarkerSnippet(true, geocoder)));
+                    .icon(getTransportIcon(meanOfTransport)));
         }
 
         Marker endMarker = null;
@@ -747,8 +763,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             endMarker = mMap.addMarker(new MarkerOptions()
                     .position(endLatLng)
                     .title(report.getMarkerTitle(false))
-                    .icon(icon)
-                    .snippet(report.getMarkerSnippet(false, geocoder)));
+                    .icon(getTransportIcon(meanOfTransport)));
         }
 
         if (startMarker != null && endMarker != null)
@@ -761,10 +776,25 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
             markerPairs.add(new MarkerPair(startMarker, endMarker));
         }
+        else if(startMarker != null)
+        {
+            startMarker.setTag(report);
+            reportmarkersList.add(startMarker);
+        }
+        else if(endMarker != null)
+        {
+            endMarker.setTag(report);
+            reportmarkersList.add(endMarker);
+        }
     }
 
     public void openReportSheetDialog()
     {
+        startHour = 0;
+        startMinute = 0;
+
+        endHour = 0;
+        endMinute = 0;
         if (startingMarker == null)
         {
             LatLng candidate = userCurrentLocation;
@@ -827,12 +857,12 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                         autocompleteSupportFragment.setText(city);
                     } else
                     {
-                        autocompleteSupportFragment.setText("Destination not found");
+                        autocompleteSupportFragment.setText(getString(R.string.destination_not_found));
                     }
                 } catch (IOException e)
                 {
                     e.printStackTrace();
-                    autocompleteSupportFragment.setText("Error getting destination");
+                    autocompleteSupportFragment.setText(getString(R.string.toast_error_occurred));
                 }
             }
 
@@ -846,6 +876,13 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             delayEditText.setText("0");
             Button cancelButton = sheetView.findViewById(R.id.btn_cancel);
             Button submitButton = sheetView.findViewById(R.id.btn_submit);
+            Button pickStartTime = sheetView.findViewById(R.id.btn_pick_start_time);
+            Button pickEndTime = sheetView.findViewById(R.id.btn_pick_end_time);
+
+            configureTimePickers(pickStartTime,pickEndTime);
+
+            pickStartTime.setText(String.format("%02d:%02d", startHour, startMinute));
+            pickEndTime.setText(String.format("%02d:%02d", endHour, endMinute));
 
             detailsEditText.setText(problemDetailsText);
             delayEditText.setText(String.valueOf(delayMinutes));
@@ -886,29 +923,24 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 removeAutoFragment(autocompleteSupportFragment);
             });
 
-            submitButton.setOnClickListener(x ->
-            {
+            submitButton.setOnClickListener(x -> {
                 // Get input data
                 String meanOfTransport = spinnerTransport.getSelectedItem().toString();
                 String problemType = spinnerProblem.getSelectedItem().toString();
                 String problemDetails = detailsEditText.getText().toString();
 
-                if (destinationMarker == null)
-                {
-                    Toast.makeText(this, "Kérem adja meg a végállomást!", Toast.LENGTH_SHORT).show();
+                if (destinationMarker == null) {
+                    Toast.makeText(this, getString(R.string.toast_destination_required), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 int delay;
-                try
-                {
+                try {
                     delay = Integer.parseInt(delayEditText.getText().toString());
-                } catch (Exception e)
-                {
-                    Toast.makeText(this, "Kérem adja meg mennyi percet késik. (0, ha nincs késés)", Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Toast.makeText(this, getString(R.string.toast_delay_required), Toast.LENGTH_SHORT).show();
                     return;
                 }
-
 
                 Report report = new Report(
                         delay,
@@ -919,20 +951,45 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                         startingMarker.getPosition().latitude,
                         startingMarker.getPosition().longitude,
                         problemType,
-                        FirebaseAuth.getInstance().getCurrentUser().getUid()
+                        FirebaseAuth.getInstance().getCurrentUser().getUid(),
+                        startHour * 60 + startMinute,
+                        endHour * 60 + endMinute
                 );
                 report.save(db);
 
-                startingMarker.remove();
+                if (startingMarker != null) startingMarker.remove();
+                if (destinationMarker != null) destinationMarker.remove();
                 startingMarker = null;
-                destinationMarker.remove();
                 destinationMarker = null;
 
                 bottomSheetDialog.dismiss();
                 removeAutoFragment(autocompleteSupportFragment);
+
+                Toast.makeText(this, getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show();
             });
 
+
             bottomSheetDialog.show();
+        });
+    }
+
+    private void configureTimePickers(Button pickStartTime, Button pickEndTime)
+    {
+
+        pickStartTime.setOnClickListener(v2 -> {
+            new TimePickerFragment((hour, minute) -> {
+                startHour = hour;
+                startMinute = minute;
+                pickStartTime.setText(String.format("%02d:%02d", hour, minute));
+            }).show(getSupportFragmentManager(), "startTimePicker");
+        });
+
+        pickEndTime.setOnClickListener(v2 -> {
+            new TimePickerFragment((hour, minute) -> {
+                endHour = hour;
+                endMinute = minute;
+                pickEndTime.setText(String.format("%02d:%02d", hour, minute));
+            }).show(getSupportFragmentManager(), "endTimePicker");
         });
     }
 
@@ -1084,7 +1141,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         Report report = (Report) selectedMarker.getTag();
         if (currentUser == null)
         {
-            Toast.makeText(this, "Be kell jelentkezned a like-hoz!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.toast_login_required_for_like), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -1103,7 +1160,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             {
                 likeRef.delete().addOnSuccessListener(aVoid ->
                 {
-                    Toast.makeText(this, "Like visszavonva", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.toast_like_removed), Toast.LENGTH_SHORT).show();
                 });
                 getLikeCount(report.getDocumentId(), currentBottomSheetView);
             } else
@@ -1113,7 +1170,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
                 likeRef.set(likeData).addOnSuccessListener(aVoid ->
                 {
-                    Toast.makeText(this, "Like hozzáadva", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.toast_like_added), Toast.LENGTH_SHORT).show();
                 });
                 getLikeCount(report.getDocumentId(), currentBottomSheetView);
             }
@@ -1122,6 +1179,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
     public void openEditingBottomSheetDialog()
     {
+        startHour = 0;
+        startMinute = 0;
+
+        endHour = 0;
+        endMinute = 0;
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         currentBottomSheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_report_modify_report, null);
         bottomSheetDialog.setContentView(currentBottomSheetView);
@@ -1139,6 +1201,10 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         Button cancelButton = currentBottomSheetView.findViewById(R.id.btn_cancel);
         Button editStartMarker = currentBottomSheetView.findViewById(R.id.btn_set_start_location);
         Button editDestinationMarker = currentBottomSheetView.findViewById(R.id.btn_set_end_location);
+        Button pickStartTime = currentBottomSheetView.findViewById(R.id.btn_pick_start_time);
+        Button pickEndTime = currentBottomSheetView.findViewById(R.id.btn_pick_end_time);
+
+        configureTimePickers(pickStartTime,pickEndTime);
 
         Report report = (Report) selectedMarker.getTag();
 
@@ -1152,8 +1218,10 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             deleteButton.setVisibility(View.INVISIBLE);
             editStartMarker.setVisibility(View.GONE);
             editDestinationMarker.setVisibility(View.GONE);
-            startingCityEditText.setVisibility(View.GONE);
-            destinationCityEditText.setVisibility(View.GONE);
+            startingCityEditText.setEnabled(false);
+            destinationCityEditText.setEnabled(false);
+            pickStartTime.setEnabled(false);
+            pickEndTime.setEnabled(false);
         }
 
         setupSpinnersForReportSheet(currentBottomSheetView);
@@ -1162,6 +1230,12 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         delayEditText.setText(String.valueOf(report.getDelay()));
         startingCityEditText.setText(report.getCity(geocoder, report.getStartingLatitude(), report.getStartingLongitude()));
         destinationCityEditText.setText(report.getCity(geocoder, report.getDestinationLatitude(), report.getDestinationLongitude()));
+
+        startMinute = report.getStartMinutes();
+        endMinute = report.getEndMinutes();
+
+        pickStartTime.setText(String.format("%02d:%02d", startMinute / 60, startMinute % 60));
+        pickEndTime.setText(String.format("%02d:%02d", endMinute / 60, endMinute % 60));
 
         setSpinnerSelectionByValue(spinnerTransport, report.getMeanOfTransport());
         setSpinnerSelectionByValue(spinnerProblem, report.getType());
@@ -1302,6 +1376,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         report.setType(selectedProblemType);
         report.setDescription(details);
         report.setDelay(delay);
+        report.setStartMinutes(startHour * 60 + startMinute);
+        report.setEndMinutes(endHour * 60 + endMinute);
+
         if (destinationMarker != null)
         {
             report.setDestinationLongitude(destinationMarker.getPosition().longitude);
@@ -1478,7 +1555,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     {
         if(!userIsLoggedIn)
         {
-            Toast.makeText(this, "Ahhoz, hogy utazást hirdess meg, be kell jelentkezned!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.toast_login_required_for_carpool), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -1539,12 +1616,12 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                         autocompleteSupportFragmentCarReport.setText(city);
                     } else
                     {
-                        autocompleteSupportFragmentCarReport.setText("Destination not found");
+                        autocompleteSupportFragmentCarReport.setText(getString(R.string.destination_not_found));
                     }
                 } catch (IOException e)
                 {
                     e.printStackTrace();
-                    autocompleteSupportFragmentCarReport.setText("Error getting destination");
+                    autocompleteSupportFragmentCarReport.setText(getString(R.string.toast_error_occurred));
                 }
             }
             bottomSheetDialog.show();
@@ -1590,7 +1667,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         {
             if (destinationMarker == null)
             {
-                Toast.makeText(this, "Kérlek add meg a célpontot!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.toast_destination_missing), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -1616,7 +1693,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
             if (fromCity.isEmpty() || seatsText.isEmpty())
             {
-                Toast.makeText(this, "Minden mező kitöltése kötelező!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.toast_fill_all_fields), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -1640,11 +1717,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     {
                         String generatedId = doc.getId();
                         doc.update("documentId", generatedId);
-                        Toast.makeText(this, "Utazás sikeresen meghirdetve!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.toast_trip_posted), Toast.LENGTH_SHORT).show();
                     })
                     .addOnFailureListener(e ->
                     {
-                        Toast.makeText(this, "Hiba történt: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.toast_error_occurred) + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
 
 
@@ -1706,4 +1783,33 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         }
     }
 
+    public static class TimePickerFragment extends DialogFragment
+            implements TimePickerDialog.OnTimeSetListener {
+
+        private final OnTimeSelectedListener listener;
+
+        public interface OnTimeSelectedListener {
+            void onTimeSelected(int hour, int minute);
+        }
+
+        public TimePickerFragment(OnTimeSelectedListener listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            final Calendar c = Calendar.getInstance();
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            int minute = c.get(Calendar.MINUTE);
+            return new TimePickerDialog(getActivity(), this, hour, minute,
+                    DateFormat.is24HourFormat(getActivity()));
+        }
+
+        @Override
+        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+            if (listener != null) listener.onTimeSelected(hourOfDay, minute);
+        }
+    }
+
 }
+

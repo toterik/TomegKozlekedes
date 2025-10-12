@@ -42,13 +42,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="20dp"
-                android:text="Felhasználónév" />
+                android:text="@string/felhaszn_l_n_v" />
 
             <EditText
                 android:id="@+id/username"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:hint="Felhasználónév"
+                android:hint="@string/felhaszn_l_n_v"
                 android:inputType="text" />
 
 
@@ -75,7 +75,7 @@
                 android:id="@+id/passwordagain"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:hint="jelszó ismét"
+                android:hint="@string/jelsz_ism_t"
                 android:inputType="textPassword" />
 
             <Button
@@ -85,7 +85,7 @@
                 android:onClick="registrationByEmailAndPassword"
                 android:backgroundTint="@color/lightblue"
                 android:textColor="@color/black"
-                android:text="Regisztráció" />
+                android:text="@string/regisztr_ci" />
 
 
         </LinearLayout>

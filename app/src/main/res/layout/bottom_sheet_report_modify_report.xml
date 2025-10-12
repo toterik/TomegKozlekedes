@@ -148,6 +148,56 @@
                 android:layout_height="50dp"
                 android:layout_weight="0.5"/>
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/indul_s_id_pontja"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:fontFamily="sans-serif-medium"
+                android:paddingBottom="8dp" />
+
+
+            <Button
+                android:id="@+id/btn_pick_start_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#ADD8E6"
+                android:textColor="@android:color/black"
+                android:text="@string/id" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/rkez_s_id_pontja"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:fontFamily="sans-serif-medium"
+                android:paddingBottom="8dp" />
+
+            <Button
+                android:id="@+id/btn_pick_end_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/id"
+                android:backgroundTint="#ADD8E6"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
 
         <!-- Probléma részletei -->
         <EditText

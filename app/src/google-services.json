@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "27054539850",
+    "project_id": "tomegkozlekedesjelento",
+    "storage_bucket": "tomegkozlekedesjelento.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27054539850:android:e295cdc15e54ade49692b3",
+        "android_client_info": {
+          "package_name": "szakdolgozat.tomegkozlekedesjelento"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaom2fvNvPp0w89PqcmEsNEQaC9JUZNLM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

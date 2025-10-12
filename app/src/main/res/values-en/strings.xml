@@ -1,0 +1,125 @@
+<resources>
+    <string name="app_name">Public Transport Report</string>
+    <string name="map">Map</string>
+    <string name="logout">Logout</string>
+    <string name="login">Login</string>
+    <string name="sort">Sort</string>
+    <string name="register">Register</string>
+    <string name="cancel">Cancel</string>
+    <string name="password">Password</string>
+    <string name="email">E-mail</string>
+    <string name="delete">Delete</string>
+    <string name="password_again">Confirm Password</string>
+    <string name="resend_verification_email">Resend Verification Email</string>
+    <string name="forgot_password">Forgot your password?</string>
+    <string name="resend_password">Resend Password</string>
+    <string name="resend_email_text">Enter the email address associated with your account to reset your password</string>
+    <string name="find_your_account">Find Your Account</string>
+    <string name="title_activity_maps">Maps Activity</string>
+    <string name="jelentesek">Reports</string>
+    <string name="full">Full</string>
+    <string name="replacement">Replacement Service</string>
+    <string name="other">Other</string>
+    <string name="late">Late</string>
+    <string name="substitute">Substitute</string>
+    <string name="report_details">Report Details</string>
+    <string name="add_details_about_the_problem">Add details about the problem</string>
+    <string name="mean_of_transport">Mean of Transport:</string>
+    <string name="destination">Destination:</string>
+    <string name="send">Send</string>
+    <string name="type_of_problem">Type of Problem:</string>
+    <string name="budapest">Budapest</string>
+    <string name="delay_duration">Expected Delay (minutes):</string>
+    <string name="_30">30</string>
+    <string name="details">Details</string>
+    <string name="destination_city">Destination City:</string>
+    <string name="starting_city">Starting City:</string>
+    <string name="search_for_city">Search for City:</string>
+    <string name="edit">Edit</string>
+    <string name="edit_destination">Set Destination</string>
+    <string name="edit_starting">Set Starting Point</string>
+    <string name="like">Like</string>
+    <string name="utaz_saim">My Trips</string>
+    <string name="ranglista">Leaderboard</string>
+    <string name="keres_s_n_v_alapj_n">Search by Name...</string>
+    <string name="indul_s_id_pontja">Departure Time:</string>
+    <string name="rkez_s_id_pontja">Arrival Time:</string>
+    <string name="d_tum">Date</string>
+    <string name="id">Time</string>
+    <string name="zip_f_jl_kiv_laszt_sa">Select ZIP File</string>
+    <string name="gtfs_menetrend_felt_lt_s">Upload GTFS Schedule</string>
+    <string name="nincs_kiv_lasztva_f_jl">No File Selected</string>
+    <string name="feldolgoz_s_s_felt_lt_s">Process and Upload</string>
+    <string name="menetrend_felt_lt_s">Upload Schedule</string>
+    <string name="nyelv">Language</string>
+    <string name="felhaszn_l_n_v">Username</string>
+    <string name="jelsz_ism_t">Repeat password</string>
+    <string name="regisztr_ci">Registration</string>
+    <string name="busz_menetrend_felt_lt_s">Bus timetable upload</string>
+    <string name="busz_zip_f_jl_kiv_laszt_sa">Select bus ZIP file</string>
+    <string name="busz_menetrend_felt_lt_se">Upload bus timetable</string>
+    <string name="vonat_menetrend_felt_lt_s">Train timetable upload</string>
+    <string name="vonat_zip_f_jl_kiv_laszt_sa">Select train ZIP file</string>
+    <string name="vonat_menetrend_felt_lt_se">Upload train timetable</string>
+    <string name="elfogad">Accept</string>
+    <string name="elutas_t">Reject</string>
+    <string name="aut_megoszt_s">Car sharing</string>
+    <string name="indul_si_hely">Departure location:</string>
+    <string name="c_l_llom_s">Destination:</string>
+    <string name="f_r_helyek_sz_ma">Number of seats:</string>
+    <string name="megjegyz_s">Note</string>
+    <string name="meghirdetem">Publish</string>
+    <string name="m_gse">Cancel</string>
+    <string name="sof_r">Driver:</string>
+    <string name="szabad_helyek">Available seats:</string>
+    <string name="jelentkezem_erre_az_tra">Join this trip</string>
+    <string name="v_ge_az_tnak">End of trip</string>
+    <string name="jelentkez_k">Applicants</string>
+    <string name="k_zleked_si_eszk_z">Transport type</string>
+    <string name="probl_ma_t_pusa">Problem type</string>
+    <string name="indul_v_ros">Departure city</string>
+    <string name="k_s_s_id_tartama_perc">Delay duration (minutes)</string>
+    <string name="probl_ma_le_r_sa">Problem description</string>
+    <string name="bez_r_s">Close</string>
+
+    <string name="toast_location_permission_required">Location permission is required to use this feature.</string>
+    <string name="toast_login_required_for_report">You must be logged in to report a problem!</string>
+    <string name="toast_destination_required">Please specify the destination!</string>
+    <string name="toast_delay_required">Please specify the delay in minutes (0 if there is none).</string>
+    <string name="toast_report_submitted">Report successfully submitted!</string>
+    <string name="toast_accepted">Accepted!</string>
+    <string name="toast_rejected">Rejected!</string>
+    <string name="toast_already_applied">You have already applied for this trip!</string>
+    <string name="toast_application_sent">Application sent!</string>
+    <string name="toast_error_with_message">Error: %1$s</string>
+    <string name="toast_login_required_for_like">You must be logged in to like!</string>
+    <string name="toast_like_removed">Like removed</string>
+    <string name="toast_like_added">Like added</string>
+    <string name="toast_login_required_for_carpool">You must be logged in to post a carpool!</string>
+    <string name="toast_destination_missing">Please specify the destination!</string>
+    <string name="toast_fill_all_fields">All fields must be filled!</string>
+    <string name="toast_trip_posted">Trip successfully posted!</string>
+    <string name="toast_error_occurred">An error occurred: %1$s</string>
+
+    <string-array name="means_of_transport">
+        <item>Bus</item>
+        <item>Train</item>
+        <item>Trolley</item>
+        <item>Tram</item>
+    </string-array>
+
+    <string-array name="type_of_problem">
+        <item>Late</item>
+        <item>Full</item>
+        <item>Replacement Service</item>
+        <item>Other</item>
+    </string-array>
+
+    <string-array name="filter_means_of_transport">
+        <item>All</item>
+        <item>Bus</item>
+        <item>Train</item>
+        <item>Trolley</item>
+        <item>Tram</item>
+    </string-array>
+</resources>

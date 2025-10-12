@@ -8,7 +8,7 @@
         android:id="@+id/tv_driver"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sofőr: "
+        android:text="@string/sof_r"
         android:textSize="18sp"
         android:fontFamily="sans-serif-medium"
         android:paddingBottom="8dp" />
@@ -25,7 +25,7 @@
         android:id="@+id/tv_seats"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Szabad helyek: "
+        android:text="@string/szabad_helyek"
         android:textSize="16sp"
         android:paddingBottom="8dp" />
 
@@ -41,7 +41,7 @@
         android:id="@+id/btn_join"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Jelentkezem erre az útra"
+        android:text="@string/jelentkezem_erre_az_tra"
         android:backgroundTint="#ADD8E6"
         android:textColor="@android:color/black"
         android:layout_marginBottom="8dp"/>
@@ -50,7 +50,7 @@
         android:id="@+id/btn_endCarReport"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Vége az útnak"
+        android:text="@string/v_ge_az_tnak"
         android:backgroundTint="#F08080"
         android:textColor="@android:color/black"/>
 </LinearLayout>

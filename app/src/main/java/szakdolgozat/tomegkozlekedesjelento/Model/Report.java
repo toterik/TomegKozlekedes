@@ -6,6 +6,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.Exclude;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -28,6 +29,8 @@ public class Report implements Serializable
     private String type;
     private String uid;
     private String documentId;
+    private int startMinutes;
+    private int endMinutes;
 
     public Report()
     {}
@@ -39,7 +42,9 @@ public class Report implements Serializable
                   double startingLatitude,
                   double startingLongitude,
                   String type,
-                  String uid)
+                  String uid,
+                  int startMinutes,
+                  int endMinutes)
     {
         this.delay = delay;
         this.description = description;
@@ -50,6 +55,8 @@ public class Report implements Serializable
         this.startingLongitude = startingLongitude;
         this.type = type;
         this.uid = uid;
+        this.startMinutes = startMinutes;
+        this.endMinutes = endMinutes;
     }
 
     public String getMarkerTitle(boolean isStarting)
@@ -184,23 +191,19 @@ public class Report implements Serializable
     }
 
 
-    @NonNull
-    @Override
-    public String toString()
-    {
-        return "Report{" +
-                "delay=" + delay +
-                ", description='" + description + '\'' +
-                ", destinationLatitude=" + destinationLatitude +
-                ", destinationLongitude=" + destinationLongitude +
-                ", meanOfTransport='" + meanOfTransport + '\'' +
-                ", startingLatitude=" + startingLatitude +
-                ", startingLongitude=" + startingLongitude +
-                ", type='" + type + '\'' +
-                ", uid='" + uid + '\'' +
-                ", documentId='" + documentId + '\'' +
-                '}';
-    }
+
+    @PropertyName("start_minutes")
+    public int getStartMinutes() { return startMinutes; }
+    @PropertyName("start_minutes")
+    public void setStartMinutes(int startMinutes) { this.startMinutes = startMinutes; }
+
+
+
+    @PropertyName("end_minutes")
+    public int getEndMinutes() { return endMinutes; }
+    @PropertyName("end_minutes")
+    public void setEndMinutes(int endMinutes) { this.endMinutes = endMinutes; }
+
 
     public void save(FirebaseFirestore db) {
         String newDocId = db.collection("reports").document().getId();

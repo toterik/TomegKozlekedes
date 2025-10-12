@@ -81,14 +81,6 @@
     <string name="k_s_s_id_tartama_perc">Késés időtartama (perc)</string>
     <string name="probl_ma_le_r_sa">Probléma leírása</string>
     <string name="bez_r_s">Bezárás</string>
-    <string name ="elfogadva">Elfogadva</string>
-    <string name ="ismeretlen_felhasznalo">Ismeretlen felhasználó</string>
-    <string name ="elutas_tva">Elutasítva</string>
-    <string name ="ismeretlen">Ismeretlen</string>
-    <string name ="helyek">Helyek: </string>
-    <string name ="betelt">Betelt</string>
-    <string name ="destination_not_found">Cél város nem található meg</string>
-
 
     <string name="toast_location_permission_required">A helyhozzáférés engedélyezése szükséges a funkció használatához.</string>
     <string name="toast_login_required_for_report">Ahhoz, hogy bejelents egy problémát, be kell jelentkezned!</string>
@@ -107,7 +99,7 @@
     <string name="toast_destination_missing">Kérlek add meg a célpontot!</string>
     <string name="toast_fill_all_fields">Minden mező kitöltése kötelező!</string>
     <string name="toast_trip_posted">Utazás sikeresen meghirdetve!</string>
-    <string name="toast_error_occurred">Hiba történt: </string>
+    <string name="toast_error_occurred">Hiba történt: %1$s</string>
 
     <string-array name="means_of_transport">
         <item>Busz</item>

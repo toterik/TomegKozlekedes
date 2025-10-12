@@ -50,6 +50,8 @@
         <activity
             android:name=".LeaderboardActivity"
             android:exported="false" />
-
+        <activity
+            android:name=".UploadGtfsActivity"
+            android:exported="false" />
     </application>
 </manifest>

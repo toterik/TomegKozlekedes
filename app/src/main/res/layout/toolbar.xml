@@ -1,10 +1,12 @@
 <androidx.appcompat.widget.Toolbar
-    android:id="@+id/toolbar"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/toolbar"
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
     android:layout_gravity="start"
     android:elevation="4dp"
     android:contentInsetStart="0dp"
     android:contentInsetLeft="0dp"
-    android:contentInsetStartWithNavigation="0dp" />
+    android:contentInsetStartWithNavigation="0dp">
+
+</androidx.appcompat.widget.Toolbar>

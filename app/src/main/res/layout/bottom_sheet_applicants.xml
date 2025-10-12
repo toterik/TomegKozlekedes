@@ -19,26 +19,26 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Email"
+            android:text="@string/email"
             android:textSize="16sp"/>
 
         <Button
             android:id="@+id/btn_accept"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Elfogad" />
+            android:text="@string/elfogad" />
 
         <Button
             android:id="@+id/btn_reject"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Elutasít" />
+            android:text="@string/elutas_t" />
     </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Jelentkezők"
+        android:text="@string/jelentkez_k"
         android:textSize="18sp"
         android:textStyle="bold"
         android:paddingBottom="8dp"/>

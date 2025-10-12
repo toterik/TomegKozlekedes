@@ -10,11 +10,11 @@ android {
 
     defaultConfig {
         applicationId "szakdolgozat.tomegkozlekedesjelento"
-        minSdk 24
+        minSdk 26
         targetSdk 34
         versionCode 1
         versionName "1.0"
-
+        multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -68,4 +68,5 @@ dependencies {
     implementation libs.firebase.database.v2033
     implementation libs.play.services.location
     implementation libs.places
+    implementation libs.multidex
 }

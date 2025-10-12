@@ -21,7 +21,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Közlekedési eszköz"
+                android:text="@string/k_zleked_si_eszk_z"
                 android:textStyle="bold"
                 android:textSize="16sp" />
 
@@ -45,7 +45,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Probléma típusa"
+                android:text="@string/probl_ma_t_pusa"
                 android:textStyle="bold"
                 android:textSize="16sp" />
 
@@ -69,7 +69,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Induló város"
+                android:text="@string/indul_v_ros"
                 android:textStyle="bold"
                 android:textSize="16sp" />
 
@@ -93,7 +93,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Célállomás"
+                android:text="@string/c_l_llom_s"
                 android:textStyle="bold"
                 android:textSize="16sp" />
 
@@ -117,7 +117,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Késés időtartama (perc)"
+                android:text="@string/k_s_s_id_tartama_perc"
                 android:textStyle="bold"
                 android:textSize="16sp" />
 
@@ -141,7 +141,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Probléma leírása"
+                android:text="@string/probl_ma_le_r_sa"
                 android:textStyle="bold"
                 android:textSize="16sp" />
 
@@ -158,7 +158,7 @@
             android:id="@+id/btn_cancel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Bezárás"
+            android:text="@string/bez_r_s"
             android:layout_marginTop="20dp"
             android:backgroundTint="#F08080"
             android:textColor="@android:color/black" />
