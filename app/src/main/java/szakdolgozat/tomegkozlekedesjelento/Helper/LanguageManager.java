@@ -19,11 +19,10 @@ public class LanguageManager
     public LanguageManager(Context context)
     {
         this.context = context;
-        sharedPreferences = context.getSharedPreferences("LANG", Context.MODE_PRIVATE);
+        sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
-    public void  updateResource(String code)
-    {
+    public Context updateResource(String code) {
         Locale locale = new Locale(code);
         Locale.setDefault(locale);
         Resources resources = context.getResources();
@@ -31,7 +30,9 @@ public class LanguageManager
         config.setLocale(locale);
         context = context.createConfigurationContext(config);
         setLanguage(code);
+        return context;
     }
+
 
     public String getLang()
     {

@@ -19,11 +19,10 @@ import szakdolgozat.tomegkozlekedesjelento.Helper.LanguageManager;
 public class MenuForAllActivity extends AppCompatActivity
 {
     @Override
-    protected void onCreate(@Nullable Bundle savedInstances)
-    {
-        super.onCreate(savedInstances);
-        LanguageManager languageManager = new LanguageManager(this);
-        languageManager.updateResource(languageManager.getLang());
+    protected void attachBaseContext(Context newBase) {
+        LanguageManager languageManager = new LanguageManager(newBase);
+        Context context = languageManager.updateResource(languageManager.getLang());
+        super.attachBaseContext(context);
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu)

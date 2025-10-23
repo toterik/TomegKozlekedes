@@ -20,9 +20,11 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -120,6 +122,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private ArrayList<Marker> reportmarkersList = new ArrayList<>();
     private ArrayList<Marker> carReportmarkersList = new ArrayList<>();
     private ArrayList<Marker> applicantMarkersList = new ArrayList<>();
+    private static final Map<String, String> transportMap = new HashMap<>();
     private Marker startingMarker;
     private Marker destinationMarker;
     private boolean userIsLoggedIn = false;
@@ -139,13 +142,28 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private String problemDetailsText = "";
     private int delayMinutes = 0;
     private View currentBottomSheetView;
-
     EditText detailsEditText;
     EditText delayEditText;
     EditText startingCityEditText;
     EditText destinationCityEditText;
     private int startHour, startMinute;
     private int endHour, endMinute;
+    private Handler locationHandler = new Handler();
+    private Runnable locationUpdater;
+
+
+    static
+    {
+        transportMap.put("busz", "busz");
+        transportMap.put("bus", "busz");
+        transportMap.put("vonat", "vonat");
+        transportMap.put("train","vonat");
+        transportMap.put("tram","villamos");
+        transportMap.put("villamos","villamos");
+        transportMap.put("troli","troli");
+        transportMap.put("trolley","troli");
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -235,7 +253,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         enableMyLocation();
 
         fetchCurrentLocation();
-
         //gets the marker positions from the database and displays them
         //displayAllMarkers();
         liveMarkerTracker();
@@ -275,6 +292,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             }
             return false;
         });
+        checkAndStartCarReportTracking();
     }
 
     public void openApplicantBottomSheet(Applicant applicant, CarReport carReport)
@@ -368,6 +386,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                         .addOnSuccessListener(aVoid -> Log.d("Delete_Report", "Document successfully deleted!"))
                         .addOnFailureListener(e -> Log.e("Delete_Report", "Error deleting document", e));
                 bottomSheetDialog.dismiss();
+                stopUpdatingLocation();
             });
         } else if (user != null)
         {
@@ -452,13 +471,15 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         db.collection("reports")
                 .whereLessThanOrEqualTo("start_minutes", nowMinutes)
                 .whereGreaterThanOrEqualTo("end_minutes", nowMinutes)
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null) {
+                .addSnapshotListener((snapshots, e) ->
+                {
+                    if (e != null)
+                    {
                         Log.w("TAG", "listen:error", e);
                         return;
                     }
-                    int a = snapshots.size();
-                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                    for (DocumentChange dc : snapshots.getDocumentChanges())
+                    {
                         Report report = dc.getDocument().toObject(Report.class);
                         report.setDocumentId(dc.getDocument().getId());
                         switch (dc.getType()) {
@@ -484,10 +505,12 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     }
 
 
-                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                    for (DocumentChange dc : snapshots.getDocumentChanges())
+                    {
                         CarReport carReport = dc.getDocument().toObject(CarReport.class);
                         carReport.setDocumentId(dc.getDocument().getId());
-                        switch (dc.getType()) {
+                        switch (dc.getType())
+                        {
                             case ADDED:
                                 addMarkersFromCarReport(carReport);
                                 break;
@@ -502,6 +525,50 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     }
                 });
     }
+
+    private void updateCarReportLive(CarReport updatedCarReport) {
+        String targetId = updatedCarReport.getDocumentId();
+
+        for (Marker marker : carReportmarkersList) {
+            Object tag = marker.getTag();
+            if (tag instanceof CarReport) {
+                CarReport existingReport = (CarReport) tag;
+
+                if (targetId.equals(existingReport.getDocumentId())) {
+
+                    LatLng newPos = new LatLng(
+                            updatedCarReport.getStartingLatitude(),
+                            updatedCarReport.getStartingLongitude()
+                    );
+                    marker.setPosition(newPos);
+                    break;
+                }
+            }
+        }
+        if (user != null && updatedCarReport.getUid().equals(user.getUid()))
+        {
+            int applicantResId = getResources().getIdentifier("applicant", "drawable", getPackageName());
+
+            for (Applicant applicant : updatedCarReport.getApplicants())
+            {
+                LatLng applicantLatLng = new LatLng(applicant.getStartingLatitude(), applicant.getStartingLongitude());
+                if (!markerExists(applicantLatLng))
+                {
+                    Marker applicantMarker = mMap.addMarker(new MarkerOptions()
+                        .position(applicantLatLng)
+                        .icon(getIcon("applicant")));
+
+                    if (applicantMarker != null)
+                    {
+                        applicantMarker.setTag(new ApplicantMarkerInfo(applicant,updatedCarReport));
+                    }
+                }
+            }
+        }
+    }
+
+
+
     private void removeReportMarkerLive(Report report)
     {
         double starting_latitude = report.getStartingLatitude();
@@ -546,25 +613,26 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
     private void removeCarReportMarkerLive(CarReport carReport)
     {
-        double starting_latitude = carReport.getStartingLatitude();
-        double starting_longitude = carReport.getStartingLongitude();
-        double destination_latitude = carReport.getDestinationLatitude();
-        double destination_longitude = carReport.getDestinationLongitude();
+        String targetId = carReport.getDocumentId();
 
         Iterator<Marker> iterator = carReportmarkersList.iterator();
         while (iterator.hasNext())
         {
             Marker marker = iterator.next();
-            LatLng markerPosition = marker.getPosition();
+            Object tag = marker.getTag();
 
-            if (areLatLngEqual(markerPosition, new LatLng(starting_latitude, starting_longitude)) ||
-                    areLatLngEqual(markerPosition, new LatLng(destination_latitude, destination_longitude)))
+            if (tag instanceof CarReport)
             {
-                marker.remove();
-                iterator.remove();
+                CarReport taggedReport = (CarReport) tag;
+                if (targetId.equals(taggedReport.getDocumentId()))
+                {
+                    marker.remove();
+                    iterator.remove();
+                }
             }
         }
     }
+
 
     @SuppressLint("MissingPermission")
     private void fetchCurrentLocation()
@@ -580,6 +648,105 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userCurrentLocation, 11));
             }
         });
+    }
+    private void checkAndStartCarReportTracking()
+    {
+        if (user == null) return;
+
+        db.collection("carReports")
+                .whereEqualTo("uid", user.getUid())
+                .get()
+                .addOnSuccessListener(querySnapshot ->
+                {
+                    if (!querySnapshot.isEmpty())
+                    {
+                        for (DocumentSnapshot doc : querySnapshot)
+                        {
+                            CarReport carReport = doc.toObject(CarReport.class);
+                            if (carReport != null)
+                            {
+                                carReport.setDocumentId(doc.getId());
+                                startUpdatingLocation(carReport);
+                                break;
+                            }
+                        }
+                    } else
+                    {
+                        Log.d("CarReport", "No active car reports for this user.");
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("CarReport", "Failed to check active car reports", e));
+    }
+
+    @SuppressLint("MissingPermission")
+    private void startUpdatingLocation(CarReport carReport)
+    {
+        locationUpdater = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                fusedLocationProviderClient.getLastLocation()
+                        .addOnCompleteListener(task ->
+                        {
+                            if (task.isSuccessful() && task.getResult() != null)
+                            {
+                                Location location = task.getResult();
+
+                                FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+                                db.collection("carReports")
+                                        .document(carReport.getDocumentId())
+                                        .update("starting_latitude", location.getLatitude(),
+                                                "starting_longitude", location.getLongitude())
+                                        .addOnSuccessListener(aVoid ->
+                                        {
+                                            for (Marker marker : carReportmarkersList)
+                                            {
+                                                Object tag = marker.getTag();
+                                                if (tag instanceof CarReport)
+                                                {
+                                                    CarReport cr = (CarReport) tag;
+                                                    if (cr.getDocumentId().equals(carReport.getDocumentId()))
+                                                    {
+                                                        LatLng markerPos = marker.getPosition();
+                                                        LatLng startPos = new LatLng(cr.getStartingLatitude(), cr.getStartingLongitude());
+
+                                                        if (areLatLngEqual(markerPos, startPos))
+                                                        {
+                                                            cr.setStartingLatitude(location.getLatitude());
+                                                            cr.setStartingLongitude(location.getLongitude());
+                                                            marker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        });
+
+                            }
+                        });
+                locationHandler.postDelayed(this, 10000);
+            }
+        };
+
+        locationHandler.post(locationUpdater);
+    }
+
+
+    private void stopUpdatingLocation() {
+        if (locationUpdater != null) {
+            locationHandler.removeCallbacks(locationUpdater);
+        }
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        if(item.getItemId() == R.id.logout_item)
+        {
+            stopUpdatingLocation();
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -715,18 +882,17 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         return false;
     }
     private final Map<String, BitmapDescriptor> iconCache = new HashMap<>();
-    private BitmapDescriptor getTransportIcon(String meanOfTransport) {
-        if (iconCache.containsKey(meanOfTransport)) {
-            return iconCache.get(meanOfTransport);
+    private BitmapDescriptor getIcon(String iconName) {
+        if (iconCache.containsKey(iconName)) {
+            return iconCache.get(iconName);
         }
-
-        int resourceId = getResources().getIdentifier(meanOfTransport, "drawable", getPackageName());
+        int resourceId = getResources().getIdentifier(iconName, "drawable", getPackageName());
 
         Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), resourceId);
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, 100, 100, false);
         BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resizedBitmap);
 
-        iconCache.put(meanOfTransport, icon);
+        iconCache.put(iconName, icon);
         return icon;
     }
     private void addMarkersFromReport(Report report)
@@ -745,16 +911,14 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 .replace("ü", "u")
                 .replace("ű", "u");
 
-        int resourceId = getResources().getIdentifier(meanOfTransport, "drawable", getPackageName());
-
-
         Marker startMarker = null;
+        String iconName = transportMap.get(meanOfTransport);
         if (!markerExists(startLatLng))
         {
             startMarker = mMap.addMarker(new MarkerOptions()
                     .position(startLatLng)
                     .title(report.getMarkerTitle(true))
-                    .icon(getTransportIcon(meanOfTransport)));
+                    .icon(getIcon(iconName)));
         }
 
         Marker endMarker = null;
@@ -763,7 +927,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             endMarker = mMap.addMarker(new MarkerOptions()
                     .position(endLatLng)
                     .title(report.getMarkerTitle(false))
-                    .icon(getTransportIcon(meanOfTransport)));
+                    .icon(getIcon(iconName)));
         }
 
         if (startMarker != null && endMarker != null)
@@ -1718,6 +1882,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                         String generatedId = doc.getId();
                         doc.update("documentId", generatedId);
                         Toast.makeText(this, getString(R.string.toast_trip_posted), Toast.LENGTH_SHORT).show();
+                        carReport.setDocumentId(generatedId);
+                        startUpdatingLocation(carReport);
                     })
                     .addOnFailureListener(e ->
                     {
