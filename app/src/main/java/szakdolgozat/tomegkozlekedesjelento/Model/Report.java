@@ -31,7 +31,8 @@ public class Report implements Serializable
     private String documentId;
     private int startMinutes;
     private int endMinutes;
-
+    private String parentId;
+    private boolean isAutomatic;
     public Report()
     {}
     public Report(int delay,
@@ -44,7 +45,9 @@ public class Report implements Serializable
                   String type,
                   String uid,
                   int startMinutes,
-                  int endMinutes)
+                  int endMinutes,
+                  String parentId,
+                  boolean isAutomatic)
     {
         this.delay = delay;
         this.description = description;
@@ -57,24 +60,32 @@ public class Report implements Serializable
         this.uid = uid;
         this.startMinutes = startMinutes;
         this.endMinutes = endMinutes;
+        this.parentId = parentId;
+        this.isAutomatic = isAutomatic;
     }
 
     public String getMarkerTitle(boolean isStarting)
     {
         return isStarting ? "Starting Marker" : "Destination Marker";
     }
-    public String getMarkerSnippet(boolean isStarting, Geocoder geocoder)
-    {
-        String cityName = isStarting
-                ? getCity(geocoder, startingLatitude, startingLongitude)
-                : getCity(geocoder, destinationLatitude, destinationLongitude);
 
-        return "Type: " + type + "\n" +
-                "Transport: " + meanOfTransport + "\n" +
-                "Description: " + description + "\n" +
-                "Delay: " + delay + " minutes\n" +
-                (isStarting ? "Starting city: " : "Destination: ") + cityName;
+    @PropertyName("is_automatic")
+    public boolean isAutomatic() {
+        return isAutomatic;
     }
+    @PropertyName("is_automatic")
+    public void setAutomatic(boolean automatic) {
+        isAutomatic = automatic;
+    }
+    @PropertyName("parent_id")
+    public String getParentId() {
+        return parentId;
+    }
+    @PropertyName("parent_id")
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
     //gets the city's name from the location
     public String getCity(Geocoder geocoder, double Latitude, double longitude)
     {
@@ -209,8 +220,10 @@ public class Report implements Serializable
         String newDocId = db.collection("reports").document().getId();
         this.documentId = newDocId;
         db.collection("/reports/").document(newDocId).set(this)
-                .addOnSuccessListener(aVoid -> Log.d("Save_Report", "Report saved with ID: " + newDocId))
-                .addOnFailureListener(e -> Log.e("Save_Report", "Error saving report", e));
+                .addOnSuccessListener(aVoid ->
+                        Log.d("Save_Report", "Report saved with ID: " + newDocId))
+                .addOnFailureListener(e ->
+                        Log.e("Save_Report", "Error saving report", e));
     }
 
 }

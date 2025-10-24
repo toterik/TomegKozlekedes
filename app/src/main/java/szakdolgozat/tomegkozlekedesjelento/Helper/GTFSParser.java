@@ -52,7 +52,9 @@ public class GTFSParser {
                     "schedule",
                     "system_"+meansOfTransport,
                     startDateTime.getHour() * 60 + startDateTime.getMinute(),
-                    endDateTime.getHour() * 60 + endDateTime.getMinute()
+                    endDateTime.getHour() * 60 + endDateTime.getMinute(),
+                    "",
+                    true
             );
 
             reports.add(report);

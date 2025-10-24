@@ -150,7 +150,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private int endHour, endMinute;
     private Handler locationHandler = new Handler();
     private Runnable locationUpdater;
-
+    private List<Report> linkedReports = new ArrayList<>();
+    private int linkedReportsIndex = 0;
+    private BottomSheetDialog currentReportBottomSheet;
 
     static
     {
@@ -471,11 +473,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         db.collection("reports")
                 .whereLessThanOrEqualTo("start_minutes", nowMinutes)
                 .whereGreaterThanOrEqualTo("end_minutes", nowMinutes)
+                .whereEqualTo("parent_id","")
                 .addSnapshotListener((snapshots, e) ->
                 {
                     if (e != null)
                     {
-                        Log.w("TAG", "listen:error", e);
                         return;
                     }
                     for (DocumentChange dc : snapshots.getDocumentChanges())
@@ -1117,7 +1119,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                         problemType,
                         FirebaseAuth.getInstance().getCurrentUser().getUid(),
                         startHour * 60 + startMinute,
-                        endHour * 60 + endMinute
+                        endHour * 60 + endMinute,
+                        "",
+                        false
                 );
                 report.save(db);
 
@@ -1350,7 +1354,6 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         endMinute = 0;
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         currentBottomSheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_report_modify_report, null);
-        bottomSheetDialog.setContentView(currentBottomSheetView);
 
 
         spinnerTransport = currentBottomSheetView.findViewById(R.id.spinner_transport);
@@ -1372,24 +1375,32 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
         Report report = (Report) selectedMarker.getTag();
 
-        if (user == null || (!"admin".equals(currentUserRole) && !report.getUid().equals(user.getUid())))
+
+        if(report.isAutomatic())
         {
-            spinnerTransport.setEnabled(false);
-            spinnerProblem.setEnabled(false);
-            detailsEditText.setEnabled(false);
-            delayEditText.setEnabled(false);
-            editButton.setVisibility(View.INVISIBLE);
-            deleteButton.setVisibility(View.INVISIBLE);
-            editStartMarker.setVisibility(View.GONE);
-            editDestinationMarker.setVisibility(View.GONE);
-            startingCityEditText.setEnabled(false);
-            destinationCityEditText.setEnabled(false);
-            pickStartTime.setEnabled(false);
-            pickEndTime.setEnabled(false);
+            loadLinkedReportsAndShow(report);
+            return;
         }
-
+        else
+        {
+            if (user == null || (!"admin".equals(currentUserRole) && !report.getUid().equals(user.getUid())))
+            {
+                spinnerTransport.setEnabled(false);
+                spinnerProblem.setEnabled(false);
+                detailsEditText.setEnabled(false);
+                delayEditText.setEnabled(false);
+                editButton.setVisibility(View.GONE);
+                deleteButton.setVisibility(View.GONE);
+                editStartMarker.setVisibility(View.GONE);
+                editDestinationMarker.setVisibility(View.GONE);
+                startingCityEditText.setEnabled(false);
+                destinationCityEditText.setEnabled(false);
+                pickStartTime.setEnabled(false);
+                pickEndTime.setEnabled(false);
+            }
+            bottomSheetDialog.setContentView(currentBottomSheetView);
+        }
         setupSpinnersForReportSheet(currentBottomSheetView);
-
         detailsEditText.setText(report.getDescription());
         delayEditText.setText(String.valueOf(report.getDelay()));
         startingCityEditText.setText(report.getCity(geocoder, report.getStartingLatitude(), report.getStartingLongitude()));
@@ -1406,7 +1417,33 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
         editButton.setOnClickListener(v ->
         {
-            editReport(report);
+            if (report.isAutomatic())
+            {
+                String selectedProblemType = spinnerProblem.getSelectedItem().toString();
+                String details = detailsEditText.getText().toString();
+                String delayText = delayEditText.getText().toString();
+
+                Report childReport = new Report(
+                        Integer.parseInt(delayText),
+                        details,
+                        report.getDestinationLatitude(),
+                        report.getDestinationLongitude(),
+                        report.getMeanOfTransport(),
+                        report.getStartingLatitude(),
+                        report.getStartingLongitude(),
+                        selectedProblemType,
+                        report.getUid(),
+                        report.getStartMinutes(),
+                        report.getEndMinutes(),
+                        report.getDocumentId(),
+                        false
+                );
+                childReport.save(db);
+            }
+            else
+            {
+                editReport(report);
+            }
             bottomSheetDialog.dismiss();
         });
 
@@ -1976,6 +2013,226 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             if (listener != null) listener.onTimeSelected(hourOfDay, minute);
         }
     }
+    private void loadLinkedReportsAndShow(Report baseReport) {
+        linkedReports.clear();
+        linkedReports.add(baseReport);
 
+        db.collection("reports")
+                .whereEqualTo("parent_id", baseReport.getDocumentId())
+                .get()
+                .addOnSuccessListener(querySnapshot ->
+                {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments())
+                    {
+                        Report child = doc.toObject(Report.class);
+                        if (child != null) {
+                            child.setDocumentId(doc.getId());
+                            linkedReports.add(child);
+                        }
+                    }
+                    linkedReportsIndex = 0;
+                    showLinkedReportAtIndex(linkedReportsIndex);
+                })
+                .addOnFailureListener(e ->
+                {
+                    linkedReportsIndex = 0;
+                    showLinkedReportAtIndex(linkedReportsIndex);
+                });
+    }
+
+    private void showLinkedReportAtIndex(int index)
+    {
+        if (index < 0 || index >= linkedReports.size()) return;
+        Report report = linkedReports.get(index);
+
+        if (currentReportBottomSheet != null && currentReportBottomSheet.isShowing())
+        {
+            currentReportBottomSheet.dismiss();
+            currentReportBottomSheet = null;
+        }
+
+        currentReportBottomSheet = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_report_modify_report, null);
+        currentReportBottomSheet.setContentView(sheetView);
+
+        Spinner spinnerTransportLocal = sheetView.findViewById(R.id.spinner_transport);
+        Spinner spinnerProblemLocal = sheetView.findViewById(R.id.spinner_problem_type);
+        EditText detailsEditLocal = sheetView.findViewById(R.id.et_problem_details);
+        EditText delayEditLocal = sheetView.findViewById(R.id.et_delay_duration);
+        TextView tvIndex = sheetView.findViewById(R.id.tv_report_index);
+        Button btnPrev = sheetView.findViewById(R.id.btn_prev_report);
+        Button btnNext = sheetView.findViewById(R.id.btn_next_report);
+        Button editButtonLocal = sheetView.findViewById(R.id.btn_edit);
+        Button deleteButtonLocal = sheetView.findViewById(R.id.btn_delete);
+        Button cancelButtonLocal = sheetView.findViewById(R.id.btn_cancel);
+        Button pickStartTimeLocal = sheetView.findViewById(R.id.btn_pick_start_time);
+        Button pickEndTimeLocal = sheetView.findViewById(R.id.btn_pick_end_time);
+        Button setStartingLocation = sheetView.findViewById(R.id.btn_set_start_location);
+        Button setDestinationLocation = sheetView.findViewById(R.id.btn_set_end_location);
+        EditText startingCityLocal = sheetView.findViewById(R.id.startingCity);
+        EditText destinationCityLocal = sheetView.findViewById(R.id.destinationCity);
+
+        setupSpinnersForReportSheet(sheetView);
+        detailsEditLocal.setText(report.getDescription());
+        delayEditLocal.setText(String.valueOf(report.getDelay()));
+        setSpinnerSelectionByValue(spinnerTransportLocal, report.getMeanOfTransport());
+        setSpinnerSelectionByValue(spinnerProblemLocal, report.getType());
+        startingCityLocal.setText(report.getCity(geocoder, report.getStartingLatitude(), report.getStartingLongitude()));
+        destinationCityLocal.setText(report.getCity(geocoder, report.getDestinationLatitude(), report.getDestinationLongitude()));
+        getLikeCount(report.getDocumentId(), currentBottomSheetView);
+        pickStartTimeLocal.setText(String.format("%02d:%02d", report.getStartMinutes() / 60, report.getEndMinutes() % 60));
+        pickEndTimeLocal.setText(String.format("%02d:%02d", report.getEndMinutes() / 60, report.getEndMinutes() % 60));
+
+        tvIndex.setText((index + 1) + " / " + linkedReports.size());
+
+        btnPrev.setEnabled(index > 0);
+        btnNext.setEnabled(index < linkedReports.size() - 1);
+        btnPrev.setOnClickListener(v ->
+        {
+            if (linkedReportsIndex > 0)
+            {
+                linkedReportsIndex--;
+                showLinkedReportAtIndex(linkedReportsIndex);
+            }
+        });
+        btnNext.setOnClickListener(v ->
+        {
+            if (linkedReportsIndex < linkedReports.size() - 1)
+            {
+                linkedReportsIndex++;
+                showLinkedReportAtIndex(linkedReportsIndex);
+            }
+        });
+
+        cancelButtonLocal.setOnClickListener(v ->
+        {
+            if (currentReportBottomSheet != null && currentReportBottomSheet.isShowing())
+            {
+                currentReportBottomSheet.dismiss();
+            }
+        });
+
+        boolean isChild = report.getParentId() != null && !report.getParentId().isEmpty();
+
+        if (isChild)
+        {
+            spinnerTransportLocal.setEnabled(false);
+            spinnerProblemLocal.setEnabled(false);
+            detailsEditLocal.setEnabled(false);
+            delayEditLocal.setEnabled(false);
+            startingCityLocal.setEnabled(false);
+            destinationCityLocal.setEnabled(false);
+            pickStartTimeLocal.setEnabled(false);
+            pickEndTimeLocal.setEnabled(false);
+            editButtonLocal.setVisibility(View.GONE);
+            deleteButtonLocal.setVisibility(View.GONE);
+            setStartingLocation.setVisibility(View.GONE);
+            setDestinationLocation.setVisibility(View.GONE);
+        } else
+        {
+            editButtonLocal.setOnClickListener(v ->
+            {
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                if (currentUser == null)
+                {
+                    Toast.makeText(this, getString(R.string.toast_login_required_for_report), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String details = detailsEditLocal.getText().toString();
+                String delayText = delayEditLocal.getText().toString();
+                int delay = 0;
+                try
+                {
+                    delay = Integer.parseInt(delayText);
+                } catch (Exception ex)
+                {
+                    delay = 0;
+                }
+
+                Report childReport = new Report(
+                        delay,
+                        details,
+                        report.getDestinationLatitude(),
+                        report.getDestinationLongitude(),
+                        report.getMeanOfTransport(),
+                        report.getStartingLatitude(),
+                        report.getStartingLongitude(),
+                        spinnerProblemLocal.getSelectedItem().toString(),
+                        currentUser.getUid(),
+                        report.getStartMinutes(),
+                        report.getEndMinutes(),
+                        report.getDocumentId(),
+                        false
+                );
+
+                // Optionally prevent creating many child reports by same user: try find existing child by parent+uid
+                db.collection("reports")
+                        .whereEqualTo("parent_id", report.getDocumentId())
+                        .whereEqualTo("uid", currentUser.getUid())
+                        .limit(1)
+                        .get()
+                        .addOnSuccessListener(q ->
+                        {
+                            if (!q.isEmpty())
+                            {
+                                DocumentSnapshot doc = q.getDocuments().get(0);
+                                db.collection("reports").document(doc.getId()).set(childReport)
+                                        .addOnSuccessListener(a -> {
+                                            loadLinkedReportsAndShow(report);
+                                        });
+                            }
+                            else
+                            {
+                                db.collection("reports").add(childReport)
+                                        .addOnSuccessListener(docRef -> {
+                                            String id = docRef.getId();
+                                            docRef.update("documentId", id);
+                                            loadLinkedReportsAndShow(report);
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Log.e("ChildReport", "Failed creating child", e);
+                                            Toast.makeText(this, getString(R.string.toast_error_occurred) + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        });
+                            }
+                        })
+                        .addOnFailureListener(e ->
+                        {
+                            Log.e("ChildReport", "Query failed", e);
+                            Toast.makeText(this, getString(R.string.toast_error_occurred), Toast.LENGTH_SHORT).show();
+                        });
+
+            });
+
+            if (user == null || (!"admin".equals(currentUserRole) && !report.getUid().equals(user.getUid())))
+            {
+                deleteButtonLocal.setVisibility(View.GONE);
+                startingCityLocal.setEnabled(false);
+                destinationCityLocal.setEnabled(false);
+                setStartingLocation.setVisibility(View.GONE);
+                setDestinationLocation.setVisibility(View.GONE);
+                spinnerTransportLocal.setEnabled(false);
+            } else
+            {
+                deleteButtonLocal.setOnClickListener(v ->
+                {
+                    removePairMarkers(report);
+                    if (currentReportBottomSheet != null && currentReportBottomSheet.isShowing())
+                    {
+                        currentReportBottomSheet.dismiss();
+                    }
+                });
+                pickStartTimeLocal.setOnClickListener(v -> new TimePickerFragment((hour, minute) ->
+                {
+                    pickStartTimeLocal.setText(String.format("%02d:%02d", hour, minute));
+                }).show(getSupportFragmentManager(), "startTimePicker"));
+                pickEndTimeLocal.setOnClickListener(v -> new TimePickerFragment((hour, minute) ->
+                {
+                    pickEndTimeLocal.setText(String.format("%02d:%02d", hour, minute));
+                }).show(getSupportFragmentManager(), "endTimePicker"));
+            }
+        }
+        currentReportBottomSheet.show();
+    }
 }
 

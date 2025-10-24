@@ -23,7 +23,43 @@
             android:paddingBottom="8dp"
             android:textColor="@android:color/black"/>
 
-        <!-- Közlekedési eszköz -->
+        <LinearLayout
+            android:id="@+id/layout_report_nav"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btn_prev_report"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="◀"
+                android:textSize="18sp"
+                android:backgroundTint="#DDDDDD"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/tv_report_index"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="1 / 1"
+                android:textSize="14sp"
+                android:textColor="@android:color/black"/>
+
+            <Button
+                android:id="@+id/btn_next_report"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="▶"
+                android:textSize="18sp"
+                android:backgroundTint="#DDDDDD"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
