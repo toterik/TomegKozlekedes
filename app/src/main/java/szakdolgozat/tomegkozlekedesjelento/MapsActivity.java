@@ -94,7 +94,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 import szakdolgozat.tomegkozlekedesjelento.Model.Applicant;
@@ -122,6 +124,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private ArrayList<Marker> reportmarkersList = new ArrayList<>();
     private ArrayList<Marker> carReportmarkersList = new ArrayList<>();
     private ArrayList<Marker> applicantMarkersList = new ArrayList<>();
+    private ArrayList<Report> allChildReports = new ArrayList<>();
+
     private static final Map<String, String> transportMap = new HashMap<>();
     private Marker startingMarker;
     private Marker destinationMarker;
@@ -153,6 +157,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private List<Report> linkedReports = new ArrayList<>();
     private int linkedReportsIndex = 0;
     private BottomSheetDialog currentReportBottomSheet;
+    private Report selectedReport;
 
     static
     {
@@ -257,11 +262,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         fetchCurrentLocation();
         //gets the marker positions from the database and displays them
         //displayAllMarkers();
+        getChildReports();
         liveMarkerTracker();
         //zoom and rotation settings on the map
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
-
 
         mMap.setOnMarkerClickListener(marker ->
         {
@@ -273,6 +278,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     Report report = (Report) marker.getTag();
                     if (report != null)
                     {
+                        selectedReport = report;
                         openEditingBottomSheetDialog();
                     }
                 } else if (marker.getTag().getClass() == CarReport.class)
@@ -295,6 +301,22 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             return false;
         });
         checkAndStartCarReportTracking();
+    }
+
+    private void getChildReports()
+    {
+        db.collection("reports")
+                .whereNotEqualTo("parent_id", "")
+                .get()
+                .addOnSuccessListener(querySnapshot ->
+                {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments())
+                    {
+                        Report child = doc.toObject(Report.class);
+                        child.setDocumentId(doc.getId());
+                        allChildReports.add(child);
+                    }
+                });
     }
 
     public void openApplicantBottomSheet(Applicant applicant, CarReport carReport)
@@ -1306,7 +1328,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     public void likeReport(View view)
     {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        Report report = (Report) selectedMarker.getTag();
+        Report report = selectedReport;
         if (currentUser == null)
         {
             Toast.makeText(this, getString(R.string.toast_login_required_for_like), Toast.LENGTH_SHORT).show();
@@ -1374,6 +1396,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         configureTimePickers(pickStartTime,pickEndTime);
 
         Report report = (Report) selectedMarker.getTag();
+        selectedReport = report;
 
 
         if(report.isAutomatic())
@@ -2017,34 +2040,20 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         linkedReports.clear();
         linkedReports.add(baseReport);
 
-        db.collection("reports")
-                .whereEqualTo("parent_id", baseReport.getDocumentId())
-                .get()
-                .addOnSuccessListener(querySnapshot ->
-                {
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments())
-                    {
-                        Report child = doc.toObject(Report.class);
-                        if (child != null) {
-                            child.setDocumentId(doc.getId());
-                            linkedReports.add(child);
-                        }
-                    }
-                    linkedReportsIndex = 0;
-                    showLinkedReportAtIndex(linkedReportsIndex);
-                })
-                .addOnFailureListener(e ->
-                {
-                    linkedReportsIndex = 0;
-                    showLinkedReportAtIndex(linkedReportsIndex);
-                });
+        linkedReports.addAll(
+                allChildReports.stream()
+                        .filter(r -> Objects.equals(r.getParentId(), baseReport.getDocumentId()))
+                        .collect(Collectors.toList())
+        );
+        linkedReportsIndex = 0;
+        showLinkedReportAtIndex(linkedReportsIndex);
     }
 
     private void showLinkedReportAtIndex(int index)
     {
         if (index < 0 || index >= linkedReports.size()) return;
         Report report = linkedReports.get(index);
-
+        selectedReport = report;
         if (currentReportBottomSheet != null && currentReportBottomSheet.isShowing())
         {
             currentReportBottomSheet.dismiss();
@@ -2054,6 +2063,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         currentReportBottomSheet = new BottomSheetDialog(this);
         View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_report_modify_report, null);
         currentReportBottomSheet.setContentView(sheetView);
+        currentBottomSheetView = sheetView;
 
         Spinner spinnerTransportLocal = sheetView.findViewById(R.id.spinner_transport);
         Spinner spinnerProblemLocal = sheetView.findViewById(R.id.spinner_problem_type);
@@ -2178,16 +2188,30 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                             {
                                 DocumentSnapshot doc = q.getDocuments().get(0);
                                 db.collection("reports").document(doc.getId()).set(childReport)
-                                        .addOnSuccessListener(a -> {
+                                        .addOnSuccessListener(docRef ->
+                                        {
+                                            childReport.setDocumentId(doc.getId());
+                                            for (int i = 0; i < allChildReports.size(); i++)
+                                            {
+                                                if (allChildReports.get(i).getDocumentId().equals(doc.getId()))
+                                                {
+                                                    allChildReports.set(i, childReport);
+                                                    break;
+                                                }
+                                            }
                                             loadLinkedReportsAndShow(report);
+
                                         });
                             }
                             else
                             {
                                 db.collection("reports").add(childReport)
-                                        .addOnSuccessListener(docRef -> {
+                                        .addOnSuccessListener(docRef ->
+                                        {
                                             String id = docRef.getId();
                                             docRef.update("documentId", id);
+                                            childReport.setDocumentId(id);
+                                            allChildReports.add(childReport);
                                             loadLinkedReportsAndShow(report);
                                         })
                                         .addOnFailureListener(e -> {
