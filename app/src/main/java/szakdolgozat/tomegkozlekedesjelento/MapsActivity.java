@@ -30,6 +30,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
@@ -61,6 +62,7 @@ import com.google.android.libraries.places.api.model.TypeFilter;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -73,6 +75,7 @@ import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.type.DateTime;
@@ -158,6 +161,9 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     private int linkedReportsIndex = 0;
     private BottomSheetDialog currentReportBottomSheet;
     private Report selectedReport;
+    private boolean isBottomSheetOpen = false;
+    private ImageView imgCar;
+
 
     static
     {
@@ -213,6 +219,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         cancelIMG_editing = findViewById(R.id.img_cancel_editing);
         okIMG_editing.setVisibility(View.INVISIBLE);
         cancelIMG_editing.setVisibility(View.INVISIBLE);
+        imgCar = findViewById(R.id.img_car);
+
     }
 
     private void initializePlacesAPI()
@@ -255,7 +263,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     public void onMapReady(GoogleMap googleMap)
     {
         mMap = googleMap;
-
+        mMap.clear();
         //if there is no permission, the user is sent back to the main page
         enableMyLocation();
 
@@ -278,22 +286,37 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     Report report = (Report) marker.getTag();
                     if (report != null)
                     {
-                        selectedReport = report;
-                        openEditingBottomSheetDialog();
+                        if(!isBottomSheetOpen)
+                        {
+                            isBottomSheetOpen = true;
+
+                            selectedReport = report;
+                            openEditingBottomSheetDialog();
+                        }
                     }
                 } else if (marker.getTag().getClass() == CarReport.class)
                 {
-                    CarReport carReport = (CarReport) marker.getTag();
-                    if (carReport != null)
+                    if(!isBottomSheetOpen)
                     {
-                        openCarReportDetailsBottomSheet(carReport);
+                        isBottomSheetOpen = true;
+
+                        CarReport carReport = (CarReport) marker.getTag();
+                        if (carReport != null)
+                        {
+                            openCarReportDetailsBottomSheet(carReport);
+                        }
                     }
                 } else if (marker.getTag().getClass() == ApplicantMarkerInfo.class)
                 {
-                    ApplicantMarkerInfo applicantMarkerInfo = (ApplicantMarkerInfo) marker.getTag();
-                    if (applicantMarkerInfo != null)
+                    if(!isBottomSheetOpen)
                     {
-                        openApplicantBottomSheet(applicantMarkerInfo.getApplicant(), applicantMarkerInfo.getCarReport());
+                        isBottomSheetOpen = true;
+
+                        ApplicantMarkerInfo applicantMarkerInfo = (ApplicantMarkerInfo) marker.getTag();
+                        if (applicantMarkerInfo != null)
+                        {
+                            openApplicantBottomSheet(applicantMarkerInfo.getApplicant(), applicantMarkerInfo.getCarReport());
+                        }
                     }
                 }
                 return true;
@@ -328,6 +351,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         TextView tvName = sheetView.findViewById(R.id.tv_applicant_name);
         Button btnAccept = sheetView.findViewById(R.id.btn_accept);
         Button btnReject = sheetView.findViewById(R.id.btn_reject);
+
+        bottomSheetDialog.setOnDismissListener(v ->
+        {
+            isBottomSheetOpen = false;
+        });
 
         // Firestore lekérés a user emailéhez
         FirebaseFirestore.getInstance().collection("Users")
@@ -392,6 +420,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         TextView tvComment = sheetView.findViewById(R.id.tv_comment);
         Button btnJoin = sheetView.findViewById(R.id.btn_join);
         Button endCarReport = sheetView.findViewById(R.id.btn_endCarReport);
+
+        bottomSheetDialog.setOnDismissListener(v ->
+        {
+            isBottomSheetOpen = false;
+        });
 
         String currentUid = "";
         if (user != null)
@@ -498,7 +531,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 .whereEqualTo("parent_id","")
                 .addSnapshotListener((snapshots, e) ->
                 {
-                    if (e != null)
+                    if (e != null || snapshots == null)
                     {
                         return;
                     }
@@ -506,16 +539,20 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     {
                         Report report = dc.getDocument().toObject(Report.class);
                         report.setDocumentId(dc.getDocument().getId());
-                        switch (dc.getType()) {
+                        switch (dc.getType())
+                        {
                             case ADDED:
-                                addMarkersFromReport(report);
+                                runOnUiThread(() -> addMarkersFromReport(report));
                                 break;
                             case MODIFIED:
-                                removeReportMarkerLive(report);
-                                addMarkersFromReport(report);
+                                runOnUiThread(() ->
+                                {
+                                    removeReportMarkerLive(report);
+                                    addMarkersFromReport(report);
+                                });
                                 break;
                             case REMOVED:
-                                removeReportMarkerLive(report);
+                                runOnUiThread(() -> removeReportMarkerLive(report));
                                 break;
                         }
                     }
@@ -792,12 +829,14 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
     public void startProblemReport(View view)
     {
+
         if (userIsLoggedIn) openReportSheetDialog();
         else
             Toast.makeText(this, getString(R.string.toast_login_required_for_report), Toast.LENGTH_SHORT).show();
     }
 
-    public void displayAllMarkers() {
+    public void displayAllMarkers()
+    {
         LocalDateTime localDateTime = LocalDateTime.now().atZone(ZoneId.systemDefault()).toLocalDateTime();
         int nowMinutes = localDateTime.getHour() * 60 + localDateTime.getMinute();
 
@@ -978,6 +1017,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
     public void openReportSheetDialog()
     {
+        if (imgCar != null)
+        {
+            imgCar.setEnabled(false);
+            imgCar.setClickable(false);
+        }
         startHour = 0;
         startMinute = 0;
 
@@ -1020,6 +1064,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 destinationMarker.remove();
                 destinationMarker = null;
             }
+            if (imgCar != null)
+            {
+                imgCar.setEnabled(true);
+                imgCar.setClickable(true);
+            }
         });
 
 
@@ -1029,7 +1078,18 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_reporting_form, null);
             bottomSheetDialog.setContentView(sheetView);
             bottomSheetDialog.setCanceledOnTouchOutside(false);
-            bottomSheetDialog.setDismissWithAnimation(false);
+            bottomSheetDialog.setCancelable(false);
+
+            bottomSheetDialog.setOnShowListener(dialog ->
+            {
+                FrameLayout bottomSheet = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+                if (bottomSheet != null)
+                {
+                    BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
+                    behavior.setHideable(false);
+                    behavior.setDraggable(false);
+                }
+            });
             if (startingMarker == null) return;
             setupAutoCompleteFragment(bottomSheetDialog);
 
@@ -1077,6 +1137,8 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             spinnerTransport.setSelection(selectedTransport);
             spinnerProblem.setSelection(selectedProblem);
 
+
+
             bottomSheetDialog.setOnDismissListener(x ->
             {
                 if (spinnerTransport != null && spinnerProblem != null && delayEditText != null && detailsEditText != null)
@@ -1091,6 +1153,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                     {
                         delayMinutes = 0;
                     }
+                }
+                if (imgCar != null)
+                {
+                    imgCar.setEnabled(true);
+                    imgCar.setClickable(true);
                 }
             });
 
@@ -1156,6 +1223,12 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 removeAutoFragment(autocompleteSupportFragment);
 
                 Toast.makeText(this, getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show();
+
+                if (imgCar != null)
+                {
+                    imgCar.setEnabled(true);
+                    imgCar.setClickable(true);
+                }
             });
 
 
@@ -1437,6 +1510,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
 
         setSpinnerSelectionByValue(spinnerTransport, report.getMeanOfTransport());
         setSpinnerSelectionByValue(spinnerProblem, report.getType());
+
+        bottomSheetDialog.setOnDismissListener( v ->
+        {
+            isBottomSheetOpen = false;
+        });
 
         editButton.setOnClickListener(v ->
         {
@@ -1991,16 +2069,19 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         }
     }
 
-    public void focusApplicantOnMap(Applicant applicant) {
-        if (mMap == null) return; // GoogleMap objektum
+    public void focusApplicantOnMap(Applicant applicant)
+    {
+        if (mMap == null) return;
 
         LatLng position = new LatLng(applicant.getStartingLatitude(), applicant.getStartingLongitude());
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 15));
 
 
-        for (Marker marker : applicantMarkersList) {
+        for (Marker marker : applicantMarkersList)
+        {
             LatLng pos = marker.getPosition();
-            if (pos.latitude == applicant.getStartingLatitude() && pos.longitude == applicant.getStartingLatitude()) {
+            if (pos.latitude == applicant.getStartingLatitude() && pos.longitude == applicant.getStartingLatitude())
+            {
 
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(pos, 15f));
                 marker.showInfoWindow();
@@ -2010,20 +2091,24 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
     }
 
     public static class TimePickerFragment extends DialogFragment
-            implements TimePickerDialog.OnTimeSetListener {
+            implements TimePickerDialog.OnTimeSetListener
+    {
 
         private final OnTimeSelectedListener listener;
 
-        public interface OnTimeSelectedListener {
+        public interface OnTimeSelectedListener
+        {
             void onTimeSelected(int hour, int minute);
         }
 
-        public TimePickerFragment(OnTimeSelectedListener listener) {
+        public TimePickerFragment(OnTimeSelectedListener listener)
+        {
             this.listener = listener;
         }
 
         @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
+        public Dialog onCreateDialog(Bundle savedInstanceState)
+        {
             final Calendar c = Calendar.getInstance();
             int hour = c.get(Calendar.HOUR_OF_DAY);
             int minute = c.get(Calendar.MINUTE);
@@ -2032,11 +2117,13 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
         }
 
         @Override
-        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+        public void onTimeSet(TimePicker view, int hourOfDay, int minute)
+        {
             if (listener != null) listener.onTimeSelected(hourOfDay, minute);
         }
     }
-    private void loadLinkedReportsAndShow(Report baseReport) {
+    private void loadLinkedReportsAndShow(Report baseReport)
+    {
         linkedReports.clear();
         linkedReports.add(baseReport);
 
@@ -2112,6 +2199,11 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
                 linkedReportsIndex++;
                 showLinkedReportAtIndex(linkedReportsIndex);
             }
+        });
+
+        currentReportBottomSheet.setOnDismissListener(v ->
+        {
+            isBottomSheetOpen = false;
         });
 
         cancelButtonLocal.setOnClickListener(v ->

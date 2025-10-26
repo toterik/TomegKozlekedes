@@ -110,7 +110,8 @@ public class UploadGtfsActivity extends MenuForAllActivity {
                     .get()
                     .addOnSuccessListener(query -> {
                         // törli a korábbi adatokat
-                        for (var doc : query.getDocuments()) {
+                        for (var doc : query.getDocuments())
+                        {
                             doc.getReference().delete();
                         }
 
@@ -121,13 +122,15 @@ public class UploadGtfsActivity extends MenuForAllActivity {
                                     type
                             );
 
-                            for (Report report : newReports) {
+                            for (Report report : newReports)
+                            {
                                 report.save(db);
                             }
 
                             Toast.makeText(this, type + " menetrend feltöltése sikeres!", Toast.LENGTH_LONG).show();
 
-                        } catch (IOException e) {
+                        } catch (IOException e)
+                        {
                             Toast.makeText(this, "Hiba a GTFS feldolgozásakor: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
                     });

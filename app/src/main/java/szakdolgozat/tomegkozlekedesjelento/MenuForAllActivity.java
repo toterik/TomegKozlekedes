@@ -43,11 +43,14 @@ public class MenuForAllActivity extends AppCompatActivity
             String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
             FirebaseFirestore.getInstance().collection("Users").document(uid)
                     .get()
+                    .addOnFailureListener(doc -> {
+                        var a = doc.getMessage();
+                    })
                     .addOnSuccessListener(doc ->
                     {
                         if(doc.exists())
                         {
-                            String role = doc.getString("role"); // vagy "rang" a te meződ neve
+                            String role = doc.getString("role");
                             if("admin".equals(role))
                             {
                                 menu.findItem(R.id.GTFS_upload).setVisible(true);
