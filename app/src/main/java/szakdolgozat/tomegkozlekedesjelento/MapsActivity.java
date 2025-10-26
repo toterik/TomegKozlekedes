@@ -981,7 +981,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             startMarker = mMap.addMarker(new MarkerOptions()
                     .position(startLatLng)
                     .title(report.getMarkerTitle(true))
-                    .icon(getIcon(iconName)));
+                    .icon(getIcon(iconName + "_kezdo")));
         }
 
         Marker endMarker = null;
@@ -990,7 +990,7 @@ public class MapsActivity extends MenuForAllActivity implements OnMapReadyCallba
             endMarker = mMap.addMarker(new MarkerOptions()
                     .position(endLatLng)
                     .title(report.getMarkerTitle(false))
-                    .icon(getIcon(iconName)));
+                    .icon(getIcon(iconName+"_vege")));
         }
 
         if (startMarker != null && endMarker != null)
